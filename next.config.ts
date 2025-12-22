@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
   },
   // Ensure API routes work correctly on Vercel
   experimental: {
-    serverComponentsExternalPackages: ['jsdom', '@mozilla/readability'],
+    serverComponentsExternalPackages: ['cheerio', 'html-to-text'],
   },
 };
 
