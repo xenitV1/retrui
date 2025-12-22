@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Parser from 'rss-parser'
 
+// Force dynamic rendering - required for POST handlers in Vercel
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 const parser = new Parser({
   customFields: {
     item: ['creator', 'author']

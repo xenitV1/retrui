@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { extractContent } from '@/lib/content-extractor'
 
+// Force dynamic rendering - required for POST handlers in Vercel
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
