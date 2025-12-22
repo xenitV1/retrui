@@ -77,10 +77,10 @@ export default function AboutPage() {
                                 </div>
                                 <p>
                                     <strong>Content Extraction:</strong> When you click on an article, we use{' '}
-                                    <a href="https://github.com/mozilla/readability" target="_blank" rel="noopener noreferrer" className="underline hover:bg-black hover:text-white">
-                                        Mozilla Readability
+                                    <a href="https://github.com/nickvergessen/article-extractor" target="_blank" rel="noopener noreferrer" className="underline hover:bg-black hover:text-white">
+                                        @extractus/article-extractor
                                     </a>{' '}
-                                    to extract the full article content for a distraction-free reading experience.
+                                    to intelligently extract the full article content for a distraction-free reading experience.
                                 </p>
                                 <p>
                                     <strong>Server-side Fetching:</strong> RSS feeds are fetched through our backend API (<code className="bg-gray-200 px-1">/api/fetch-rss</code>) to avoid CORS restrictions and ensure reliable delivery.
@@ -148,7 +148,7 @@ export default function AboutPage() {
                                 </div>
                                 <div className="bg-gray-100 p-3 border-2 border-black">
                                     <p className="font-bold">Content Extraction</p>
-                                    <p className="text-xs">Mozilla Readability</p>
+                                    <p className="text-xs">@extractus/article-extractor</p>
                                 </div>
                             </div>
                         </div>
