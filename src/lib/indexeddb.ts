@@ -53,7 +53,7 @@ class IndexedDBStorage {
   async get<T>(key: string): Promise<StorageData<T> | null> {
     try {
       await this.init();
-      
+
       if (!this.db) {
         return null;
       }
@@ -81,7 +81,7 @@ class IndexedDBStorage {
   async set<T>(key: string, data: StorageData<T>): Promise<void> {
     try {
       await this.init();
-      
+
       if (!this.db) {
         return;
       }
@@ -108,7 +108,7 @@ class IndexedDBStorage {
   async remove(key: string): Promise<void> {
     try {
       await this.init();
-      
+
       if (!this.db) {
         return;
       }
@@ -135,7 +135,7 @@ class IndexedDBStorage {
   async clear(): Promise<void> {
     try {
       await this.init();
-      
+
       if (!this.db) {
         return;
       }
@@ -172,7 +172,7 @@ class IndexedDBStorage {
   async keys(): Promise<string[]> {
     try {
       await this.init();
-      
+
       if (!this.db) {
         return [];
       }
@@ -255,5 +255,6 @@ export const STORAGE_KEYS = {
   PREFERENCES: 'user_preferences',
   THEME: 'theme',
   CACHE: 'cache_data',
+  CUSTOM_FEEDS: 'custom_feeds',
 } as const;
 

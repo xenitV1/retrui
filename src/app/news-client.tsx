@@ -1,12 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Clock, X, RefreshCw, ChevronLeft, ChevronRight, Filter, ExternalLink, ArrowRight, Trash2, ChevronDown, Twitter, Github, Info } from 'lucide-react'
+import { Search, Clock, X, RefreshCw, ChevronLeft, ChevronRight, Filter, ExternalLink, ArrowRight, Trash2, ChevronDown, Twitter, Github, Info, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { storage, STORAGE_KEYS } from '@/lib/indexeddb'
 
 interface NewsItem {
@@ -21,6 +24,12 @@ interface NewsItem {
   category: string
   url: string
   isFetchingFullContent?: boolean
+}
+
+interface CustomFeed {
+  name: string
+  url: string
+  category: string
 }
 
 const NEWS_PER_PAGE = 20
@@ -241,7 +250,7 @@ async function fetchRSSFeed(feed: { name: string; url: string; category: string 
   }
 }
 
-async function fetchAllNews(): Promise<NewsItem[]> {
+async function fetchAllNews(customFeeds: CustomFeed[] = []): Promise<NewsItem[]> {
   try {
     // Try to get from IndexedDB cache
     const cachedNews = await storage.get<{ data: NewsItem[], timestamp: number }>(STORAGE_KEYS.CACHE)
@@ -249,8 +258,11 @@ async function fetchAllNews(): Promise<NewsItem[]> {
       return cachedNews.data
     }
 
+    // Combine default feeds with custom feeds
+    const allFeeds = [...RSS_FEEDS, ...customFeeds]
+
     // Fetch from all RSS feeds in parallel
-    const allNewsPromises = RSS_FEEDS.map(feed => fetchRSSFeed(feed))
+    const allNewsPromises = allFeeds.map(feed => fetchRSSFeed(feed))
     const allNewsArrays = await Promise.all(allNewsPromises)
     const allNews = allNewsArrays.flat()
 
@@ -286,6 +298,29 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [darkMode, setDarkMode] = useState(false)
+
+  // Custom feeds state
+  const [customFeeds, setCustomFeeds] = useState<CustomFeed[]>([])
+  const [showAddFeedDialog, setShowAddFeedDialog] = useState(false)
+  const [newFeedName, setNewFeedName] = useState('')
+  const [newFeedUrl, setNewFeedUrl] = useState('')
+  const [newFeedCategory, setNewFeedCategory] = useState('Technology')
+  const [isAddingFeed, setIsAddingFeed] = useState(false)
+
+  // Load custom feeds from IndexedDB on mount
+  useEffect(() => {
+    const loadCustomFeeds = async () => {
+      try {
+        const savedFeeds = await storage.get<CustomFeed[]>(STORAGE_KEYS.CUSTOM_FEEDS)
+        if (savedFeeds) {
+          setCustomFeeds(savedFeeds)
+        }
+      } catch (error) {
+        console.error('Failed to load custom feeds:', error)
+      }
+    }
+    loadCustomFeeds()
+  }, [])
 
   // Effect to sync drawer loading with selected news content
   useEffect(() => {
@@ -352,7 +387,7 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
       if (showLoading) setLoading(true)
       else setIsRefreshing(true)
 
-      const data = await fetchAllNews()
+      const data = await fetchAllNews(customFeeds)
       setNews(data)
       setFilteredNews(data)
       setLastUpdate(new Date())
@@ -362,6 +397,59 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
       setLoading(false)
       setIsRefreshing(false)
     }
+  }
+
+  // Add custom feed
+  const addCustomFeed = async () => {
+    if (!newFeedName.trim() || !newFeedUrl.trim()) return
+
+    setIsAddingFeed(true)
+    try {
+      // Validate URL format
+      new URL(newFeedUrl)
+
+      const newFeed: CustomFeed = {
+        name: newFeedName.trim(),
+        url: newFeedUrl.trim(),
+        category: newFeedCategory
+      }
+
+      // Check if feed already exists
+      if (customFeeds.some(f => f.url === newFeed.url)) {
+        alert('This feed URL already exists!')
+        return
+      }
+
+      const updatedFeeds = [...customFeeds, newFeed]
+      setCustomFeeds(updatedFeeds)
+      await storage.set(STORAGE_KEYS.CUSTOM_FEEDS, updatedFeeds)
+
+      // Clear form and close dialog
+      setNewFeedName('')
+      setNewFeedUrl('')
+      setNewFeedCategory('Technology')
+      setShowAddFeedDialog(false)
+
+      // Clear cache and refresh news to include new feed
+      await storage.remove(STORAGE_KEYS.CACHE)
+      await fetchNews(true)
+    } catch (error) {
+      console.error('Failed to add custom feed:', error)
+      alert('Invalid URL format!')
+    } finally {
+      setIsAddingFeed(false)
+    }
+  }
+
+  // Remove custom feed
+  const removeCustomFeed = async (url: string) => {
+    const updatedFeeds = customFeeds.filter(f => f.url !== url)
+    setCustomFeeds(updatedFeeds)
+    await storage.set(STORAGE_KEYS.CUSTOM_FEEDS, updatedFeeds)
+
+    // Clear cache and refresh
+    await storage.remove(STORAGE_KEYS.CACHE)
+    await fetchNews(true)
   }
 
   const clearCache = async () => {
@@ -594,6 +682,98 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
                 <p className={`text-xs font-bold font-mono ${darkMode ? 'text-white' : 'text-black'}`}>{filteredNews.length}</p>
               </div>
             </div>
+
+            {/* Add Feed Dialog */}
+            <Dialog open={showAddFeedDialog} onOpenChange={setShowAddFeedDialog}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className={`w-full mb-4 text-xs font-bold font-mono uppercase border-2 px-3 py-2 transition-all ${darkMode ? 'text-white hover:bg-white hover:text-black border-gray-600 bg-gray-800' : 'text-black hover:bg-black hover:text-white border-black bg-white'}`}
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  ADD FEED
+                </Button>
+              </DialogTrigger>
+              <DialogContent className={`${darkMode ? 'bg-gray-900 border-gray-600 text-white' : 'bg-white border-black text-black'} border-4`}>
+                <DialogHeader>
+                  <DialogTitle className="font-mono text-lg">[ ADD CUSTOM RSS FEED ]</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label className="font-mono text-xs uppercase">Feed Name</Label>
+                    <Input
+                      value={newFeedName}
+                      onChange={(e) => setNewFeedName(e.target.value)}
+                      placeholder="My Custom Feed"
+                      className={`font-mono border-2 rounded-none ${darkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-black'}`}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-mono text-xs uppercase">Feed URL</Label>
+                    <Input
+                      value={newFeedUrl}
+                      onChange={(e) => setNewFeedUrl(e.target.value)}
+                      placeholder="https://example.com/rss.xml"
+                      className={`font-mono border-2 rounded-none ${darkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-black'}`}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-mono text-xs uppercase">Category</Label>
+                    <Select value={newFeedCategory} onValueChange={setNewFeedCategory}>
+                      <SelectTrigger className={`font-mono border-2 rounded-none ${darkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-black'}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className={`${darkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-black'}`}>
+                        {TECHNOLOGY_CATEGORIES.filter(c => c.value !== 'All').map(category => (
+                          <SelectItem key={category.value} value={category.value} className="font-mono">
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      onClick={addCustomFeed}
+                      disabled={isAddingFeed || !newFeedName.trim() || !newFeedUrl.trim()}
+                      className={`flex-1 font-mono text-xs uppercase border-2 ${darkMode ? 'bg-white text-black hover:bg-gray-200 border-white' : 'bg-black text-white hover:bg-gray-800 border-black'}`}
+                    >
+                      {isAddingFeed ? 'ADDING...' : 'ADD FEED'}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setShowAddFeedDialog(false)}
+                      className={`flex-1 font-mono text-xs uppercase border-2 ${darkMode ? 'text-white border-gray-600 hover:bg-gray-800' : 'text-black border-black hover:bg-gray-100'}`}
+                    >
+                      CANCEL
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Custom Feeds List */}
+            {customFeeds.length > 0 && (
+              <div className={`mb-4 p-2 border-2 ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-black bg-gray-100'}`}>
+                <p className={`text-xs font-mono uppercase mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>MY FEEDS:</p>
+                <div className="space-y-1">
+                  {customFeeds.map(feed => (
+                    <div key={feed.url} className="flex items-center justify-between group">
+                      <span className={`text-xs font-mono truncate flex-1 ${darkMode ? 'text-white' : 'text-black'}`}>
+                        {feed.name}
+                      </span>
+                      <button
+                        onClick={() => removeCustomFeed(feed.url)}
+                        className={`text-xs opacity-0 group-hover:opacity-100 transition-opacity ${darkMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-500'}`}
+                        title="Remove feed"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className={`text-xs font-mono text-center retro-footer p-2 border-2 border-t-0 ${darkMode ? 'text-white border-gray-600' : 'text-black border-black'}`}>
