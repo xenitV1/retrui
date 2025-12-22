@@ -9,10 +9,8 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  // Ensure API routes work correctly on Vercel
-  experimental: {
-    serverComponentsExternalPackages: ['cheerio', 'html-to-text'],
-  },
+  // Ensure packages work correctly on Vercel serverless
+  serverExternalPackages: ['cheerio', 'html-to-text'],
 };
 
 export default nextConfig;

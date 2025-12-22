@@ -103,23 +103,15 @@ function extractWithCheerio(html: string, url: string): ExtractedContent | null 
       wordwrap: false,
       preserveNewlines: true,
       selectors: [
-        {
-          selector: 'h1,h2,h3,h4,h5,h6',
-          format: 'block',
-          options: { uppercase: false }
-        },
-        {
-          selector: 'p',
-          format: 'block'
-        },
-        {
-          selector: 'a',
-          options: { ignoreHref: true }
-        },
-        {
-          selector: 'img',
-          format: 'skip'
-        }
+        { selector: 'h1', format: 'block', options: { uppercase: false } },
+        { selector: 'h2', format: 'block', options: { uppercase: false } },
+        { selector: 'h3', format: 'block', options: { uppercase: false } },
+        { selector: 'h4', format: 'block', options: { uppercase: false } },
+        { selector: 'h5', format: 'block', options: { uppercase: false } },
+        { selector: 'h6', format: 'block', options: { uppercase: false } },
+        { selector: 'p', format: 'block' },
+        { selector: 'a', options: { ignoreHref: true } },
+        { selector: 'img', format: 'skip' }
       ]
     })
 
