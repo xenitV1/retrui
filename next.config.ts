@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   // Ensure packages work correctly on Vercel serverless
-  serverExternalPackages: ['cheerio', 'html-to-text'],
+  serverExternalPackages: ['@extractus/article-extractor'],
 };
 
 export default nextConfig;
