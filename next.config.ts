@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
@@ -9,6 +8,10 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  // Ensure API routes work correctly on Vercel
+  experimental: {
+    serverComponentsExternalPackages: ['jsdom', '@mozilla/readability'],
   },
 };
 

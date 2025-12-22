@@ -1,0 +1,12 @@
+{
+    "functions": {
+        "app/api/fetch-content/route.ts": {
+            "memory": 1024,
+            "maxDuration": 30
+        },
+        "app/api/fetch-rss/route.ts": {
+            "memory": 512,
+            "maxDuration": 10
+        }
+    }
+}
