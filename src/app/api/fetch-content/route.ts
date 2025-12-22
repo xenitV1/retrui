@@ -4,6 +4,22 @@ import { extractContent } from '@/lib/content-extractor'
 // Force dynamic rendering - required for POST handlers in Vercel
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
+export const fetchCache = 'force-no-store'
+
+// CORS headers for cross-origin requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+// Handle CORS preflight requests
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders,
+  })
+}
 
 // Security: Block private/internal IP ranges to prevent SSRF attacks
 const BLOCKED_PATTERNS = [
@@ -32,7 +48,7 @@ export async function POST(request: NextRequest) {
     if (!url || typeof url !== 'string') {
       return NextResponse.json(
         { error: 'URL is required' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       )
     }
 
@@ -43,7 +59,7 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json(
         { error: 'Invalid URL format' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       )
     }
 
@@ -51,7 +67,7 @@ export async function POST(request: NextRequest) {
     if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
       return NextResponse.json(
         { error: 'Only HTTP and HTTPS URLs are allowed' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       )
     }
 
@@ -59,7 +75,7 @@ export async function POST(request: NextRequest) {
     if (isBlockedHost(parsedUrl.hostname)) {
       return NextResponse.json(
         { error: 'Access to internal resources is not allowed' },
-        { status: 403 }
+        { status: 403, headers: corsHeaders }
       )
     }
 
@@ -68,7 +84,7 @@ export async function POST(request: NextRequest) {
     if (parsedUrl.port && blockedPorts.includes(parsedUrl.port)) {
       return NextResponse.json(
         { error: 'Access to this port is not allowed' },
-        { status: 403 }
+        { status: 403, headers: corsHeaders }
       )
     }
 
@@ -90,7 +106,7 @@ export async function POST(request: NextRequest) {
         author: result.author || null,
         tokensUsed
       }
-    })
+    }, { headers: corsHeaders })
 
   } catch (error: any) {
     console.error('Error fetching page content:', error)
@@ -100,7 +116,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: error.message || 'Failed to fetch page content'
       },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     )
   }
 }
