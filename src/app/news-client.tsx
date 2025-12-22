@@ -913,9 +913,11 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
                 </a>
               </div>
 
-              {/* Right - Copyright */}
-              <div className={`text-xs font-mono ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+              {/* Right - Copyright & AI Credit */}
+              <div className={`flex flex-col sm:flex-row items-center gap-1 sm:gap-2 text-xs font-mono ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
                 <span>© 2024 RETRUI</span>
+                <span className="hidden sm:inline">•</span>
+                <span>Built with GLM 4.7 | Thanks to <a href="https://z.ai" target="_blank" rel="noopener noreferrer" className={`hover:underline ${darkMode ? 'hover:text-white' : 'hover:text-black'}`}>z.ai</a></span>
               </div>
             </div>
           </div>

@@ -157,3 +157,9 @@ Built by [@xenit_v0](https://x.com/xenit_v0)
 ---
 
 Built with ❤️ | Star ⭐ this repo if you find it useful!
+
+---
+
+## 🤖 Built With
+
+This project was built with **GLM 4.7**. Special thanks to the **[z.ai](https://z.ai)** team for their amazing AI tools!
