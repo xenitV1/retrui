@@ -4,7 +4,7 @@ import { locales, defaultLocale, getLocaleFromHeader, isValidLocale, type Locale
 
 // Paths that should not be localized
 const PUBLIC_FILE = /\.(.*)$/
-const IGNORED_PATHS = ['_next', 'api', 'favicon.ico', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'manifest.json', 'robots.txt', 'sitemap.xml']
+const IGNORED_PATHS = ['_next', 'api', 'favicon.ico', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'manifest.json', 'robots.txt', 'sitemap.xml', 'news-sitemap.xml']
 
 export function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl
