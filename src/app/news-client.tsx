@@ -59,6 +59,7 @@ interface CustomFeed {
 }
 
 const NEWS_PER_PAGE = 20
+const REFRESH_INTERVAL_SECONDS = 300 // 5 minutes
 
 // Batching configuration for feed fetching
 const BATCH_SIZE = 10        // Fetch 10 feeds at a time
@@ -513,6 +514,7 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
   const [isAnimating, setIsAnimating] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [darkMode, setDarkMode] = useState(false)
+  const [timeLeft, setTimeLeft] = useState(REFRESH_INTERVAL_SECONDS)
 
   // Custom feeds state
   const [customFeeds, setCustomFeeds] = useState<CustomFeed[]>([])
@@ -554,6 +556,9 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
     try {
       if (showLoading) setLoading(true)
       else setIsRefreshing(true)
+
+      // Reset countdown timer on every refresh
+      setTimeLeft(REFRESH_INTERVAL_SECONDS)
 
       // Calculate total feeds to fetch (after filtering disabled feeds and language)
       let defaultFeedsToFetch = feedPreferences
@@ -803,13 +808,20 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
       setIsAnimating(false)
     }, 500)
 
-    // Auto-refresh every 1 minute
-    const refreshInterval = setInterval(() => {
-      fetchAllNews(false)
-    }, 60000)
+    // Countdown ticker - run every 1 second
+    const ticker = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          // Trigger refresh when timer hits 0
+          fetchAllNews(false)
+          return REFRESH_INTERVAL_SECONDS
+        }
+        return prev - 1
+      })
+    }, 1000)
 
-    return () => clearInterval(refreshInterval)
-  }, [])
+    return () => clearInterval(ticker)
+  }, [fetchAllNews])
 
   // Apply dark mode class to document
   useEffect(() => {
@@ -1063,15 +1075,9 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
   }
 
   const formatTimeSinceLastUpdate = () => {
-    const now = new Date()
-    const diffInSeconds = Math.floor((now.getTime() - lastUpdate.getTime()) / 1000)
-
-    if (diffInSeconds < 60) return `${diffInSeconds}s ago`
-    if (diffInSeconds < 3600) {
-      const minutes = Math.floor(diffInSeconds / 60)
-      return `${minutes}m ago`
-    }
-    return `${Math.floor(diffInSeconds / 3600)}h ago`
+    const minutes = Math.floor(timeLeft / 60)
+    const seconds = timeLeft % 60
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`
   }
 
   // Pagination calculations for DEFAULT news
@@ -1367,9 +1373,9 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
             )}
           </div>
 
-          <div className={`text-xs font-mono text-center retro-footer p-2 border-2 border-t-0 ${darkMode ? 'text-white border-gray-600' : 'text-black border-black'}`}>
-            <p>{t('sidebar.updated')}</p>
-            <p className="font-bold">{formatTimeSinceLastUpdate()}</p>
+          <div className={`text-xs font-mono text-center retro-footer p-2 border-2 border-t-0 animate-pulse-slow ${darkMode ? 'text-white border-gray-600' : 'text-black border-black'}`}>
+            <p>{t('sidebar.nextRefresh') || 'NEXT REFRESH'}</p>
+            <p className="font-bold text-lg">{formatTimeSinceLastUpdate()}</p>
           </div>
         </div>
       </aside>

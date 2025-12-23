@@ -42,8 +42,9 @@
         "custom": "自定义",
         "loading": "加载",
         "myFeeds": "我的订阅",
-        "updated": "更新",
-        "addFeed": "添加订阅",
+        "updated": "更新于",
+        "nextRefresh": "下次刷新",
+        "addFeed": "添加种子",
         "feedSettings": "订阅设置",
         "columnLayout": "列布局"
     },

@@ -43,6 +43,7 @@
         "loading": "Loading",
         "myFeeds": "MY FEEDS",
         "updated": "UPDATED",
+        "nextRefresh": "NEXT REFRESH",
         "addFeed": "ADD FEED",
         "feedSettings": "FEED SETTINGS",
         "columnLayout": "COLUMN LAYOUT"

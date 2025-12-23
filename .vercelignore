@@ -3,6 +3,7 @@
 
 # Build output
 .next/
+.next/**/*.nft.json
 
 # Node modules
 node_modules/

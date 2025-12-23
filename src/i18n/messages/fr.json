@@ -43,6 +43,7 @@
         "loading": "Chargement",
         "myFeeds": "MES FLUX",
         "updated": "MIS À JOUR",
+        "nextRefresh": "PROCHAINE MISE À JOUR",
         "addFeed": "AJOUTER FLUX",
         "feedSettings": "PARAMÈTRES FLUX",
         "columnLayout": "MISE EN PAGE"
