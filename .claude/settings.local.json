@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(npm outdated:*)",
+      "Bash(npx npm-check-updates:*)",
+      "SlashCommand(/sc:brainstorm)",
+      "Bash(cat:*)",
+      "Bash(npx tsc:*)",
+      "Bash(dir C:UsersMehmetDesktoptechsrc)",
+      "Bash(npm run lint)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(npx rss-parser@latest:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run test:*)",
+      "Bash(del:*)",
+      "Bash(npx tsx:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

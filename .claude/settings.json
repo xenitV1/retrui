@@ -1,0 +1,31 @@
+{
+    "env": {
+      "ANTHROPIC_AUTH_TOKEN": "de3cf1b7b8594f8a94b472ab0f0e0b9d.A4Z8HbV2wST12gRH",
+      "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
+      "ANTHROPIC_DEFAULT_HAIKU_MODEL": "glm-4.5-air",
+      "ANTHROPIC_DEFAULT_SONNET_MODEL": "glm-4.7",
+      "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-4.7",
+      "API_TIMEOUT_MS": "3000000"
+    },
+    "permissions": {
+      "allow": [
+        "Bash(npm run build:*)",
+        "Bash(ssh root@46.224.36.165 \"pm2 stop all && sleep 2 && lsof -i :3000 | grep LISTEN | awk ''{print $2}'' | xargs -r kill -9 && pm2 start all && pm2 logs --lines 30\")",
+        "Bash(ssh root@46.224.36.165 \"pm2 status && sleep 5 && cat /var/www/owl-app/logs/out.log | tail -50\")",
+        "Bash(ssh root@46.224.36.165 \"pm2 logs owl-app --nostream --lines 50\")",
+        "Bash(ssh root@46.224.36.165 \"cat /var/www/owl-app/ecosystem.config.js && curl -s http://localhost:3000/health\")",
+        "Bash(ssh root@46.224.36.165 \"curl -s http://localhost:3000/api/health && echo '''' && pm2 status\")",
+        "Bash(ls:*)",
+        "Bash(dir /s C:Owl-Appsrcapp*.tsx)",
+        "Bash(findstr:*)",
+        "Bash(dir \"C:\\Owl-App\\src\")",
+        "Bash(find:*)",
+        "WebSearch",
+        "Bash(node:*)",
+        "Bash(npm run supabase:types:*)"
+      ],
+      "deny": [],
+      "ask": []
+    }
+  }
+  
