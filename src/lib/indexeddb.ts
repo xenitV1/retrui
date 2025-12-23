@@ -256,5 +256,6 @@ export const STORAGE_KEYS = {
   THEME: 'theme',
   CACHE: 'cache_data',
   CUSTOM_FEEDS: 'custom_feeds',
+  FEED_PREFERENCES: 'feed_preferences',
 } as const;
 
