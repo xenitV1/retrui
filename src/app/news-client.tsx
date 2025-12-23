@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Search, Clock, X, RefreshCw, ChevronLeft, ChevronRight, Filter, ExternalLink, ArrowRight, Trash2, ChevronDown, Twitter, Github, Info, Plus } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Search, Clock, X, RefreshCw, ChevronLeft, ChevronRight, Filter, ExternalLink, ArrowRight, Trash2, ChevronDown, Twitter, Github, Info, Plus, Settings, LayoutTemplate } from 'lucide-react'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { storage, STORAGE_KEYS } from '@/lib/indexeddb'
+import { RSS_FEEDS, MAIN_CATEGORIES, type RssFeed } from '@/lib/rss-feeds'
+import {
+  getFeedPreferences,
+  filterEnabledFeeds,
+  getFeedColor,
+  setFeedColor,
+  removeFeedColor,
+  RETRO_COLORS,
+  type FeedPreferences
+} from '@/lib/feed-preferences'
+import { FeedSettingsPanel } from '@/components/feed-settings-panel'
+import { ColumnSettingsPanel } from '@/components/column-settings-panel'
+import {
+  getActiveLayout,
+  getFeedsForColumn,
+  type ColumnLayout,
+  type Column
+} from '@/lib/column-layouts'
 
 interface NewsItem {
   id: string
@@ -34,133 +52,13 @@ interface CustomFeed {
 
 const NEWS_PER_PAGE = 20
 
-// Technology categories - will be organized under "Technology" dropdown
-const TECHNOLOGY_CATEGORIES = [
-  { name: 'All', value: 'All' },
-  { name: 'Technology', value: 'Technology' },
-  { name: 'Startups', value: 'Startups' },
-  { name: 'AI', value: 'AI' },
-  { name: 'Hardware', value: 'Hardware' },
-  { name: 'Gadgets', value: 'Gadgets' },
-  { name: 'Enterprise', value: 'Enterprise' },
-  { name: 'Science', value: 'Science' },
-  { name: 'Apple', value: 'Apple' },
-  { name: 'Google', value: 'Google' },
-  { name: 'Android', value: 'Android' },
-  { name: 'Innovation', value: 'Innovation' },
-  { name: 'Consumer Tech', value: 'Consumer Tech' }
-]
+// Category definitions - imported from @/lib/rss-feeds
+// MAIN_CATEGORIES: ['All', 'News', 'Business', 'Technology', 'Science', 'Sports', 'Entertainment', 'Lifestyle', 'Opinion']
 
-const CATEGORIES = TECHNOLOGY_CATEGORIES.map(c => c.value)
+// Convert MAIN_CATEGORIES to object format with name/value
+const CATEGORY_OPTIONS = MAIN_CATEGORIES.map(cat => ({ name: cat, value: cat }))
 
-// RSS Feeds - Client-side
-const RSS_FEEDS = [
-  {
-    name: 'TechCrunch',
-    url: 'https://techcrunch.com/feed/',
-    category: 'Startups'
-  },
-  {
-    name: 'The Verge',
-    url: 'https://www.theverge.com/rss/index.xml',
-    category: 'Technology'
-  },
-  {
-    name: 'Ars Technica',
-    url: 'https://feeds.arstechnica.com/arstechnica/index',
-    category: 'Science'
-  },
-  {
-    name: 'Wired',
-    url: 'https://www.wired.com/feed/rss',
-    category: 'Technology'
-  },
-  {
-    name: 'Engadget',
-    url: 'https://www.engadget.com/rss.xml',
-    category: 'Gadgets'
-  },
-  {
-    name: 'TechRadar',
-    url: 'https://www.techradar.com/rss',
-    category: 'Gadgets'
-  },
-  {
-    name: 'CNET',
-    url: 'https://www.cnet.com/rss/news/',
-    category: 'Technology'
-  },
-  {
-    name: 'ZDNet',
-    url: 'https://www.zdnet.com/news/rss.xml',
-    category: 'Enterprise'
-  },
-  {
-    name: 'VentureBeat',
-    url: 'https://venturebeat.com/feed/',
-    category: 'AI'
-  },
-  {
-    name: 'Mashable Tech',
-    url: 'https://mashable.com/feeds/rss/tech',
-    category: 'Technology'
-  },
-  {
-    name: 'BBC Technology',
-    url: 'https://feeds.bbci.co.uk/news/technology/rss.xml',
-    category: 'Technology'
-  },
-  {
-    name: 'MIT Technology Review',
-    url: 'https://www.technologyreview.com/feed/',
-    category: 'Innovation'
-  },
-  {
-    name: 'PCWorld',
-    url: 'https://www.pcworld.com/index.rss',
-    category: 'Hardware'
-  },
-  {
-    name: 'The Next Web',
-    url: 'https://thenextweb.com/rss/',
-    category: 'Technology'
-  },
-  {
-    name: 'Digital Trends',
-    url: 'https://www.digitaltrends.com/feed/',
-    category: 'Consumer Tech'
-  },
-  {
-    name: '9to5Mac',
-    url: 'https://9to5mac.com/feed/',
-    category: 'Apple'
-  },
-  {
-    name: '9to5Google',
-    url: 'https://9to5google.com/feed/',
-    category: 'Google'
-  },
-  {
-    name: 'Android Authority',
-    url: 'https://www.androidauthority.com/feed/',
-    category: 'Android'
-  },
-  {
-    name: 'The Register',
-    url: 'https://www.theregister.com/headlines.atom',
-    category: 'Enterprise'
-  },
-  {
-    name: 'Hacker News',
-    url: 'https://hnrss.org/frontpage',
-    category: 'Technology'
-  },
-  {
-    name: 'Slashdot',
-    url: 'https://rss.slashdot.org/Slashdot/slashdotMain',
-    category: 'Technology'
-  }
-]
+// RSS_FEEDS - imported from @/lib/rss-feeds (180+ feeds across 8 main categories)
 
 interface RSSItem {
   title?: string
@@ -217,13 +115,17 @@ async function fetchRSSFeed(feed: { name: string; url: string; category: string 
     })
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch RSS feed: ${response.statusText}`)
+      // Log specific error for debugging but don't throw - return empty array
+      const errorText = response.statusText
+      console.warn(`RSS feed ${feed.name} returned ${response.status}: ${errorText}`)
+      return []
     }
 
     const result = await response.json()
 
     if (!result.success || !result.data) {
-      throw new Error('Invalid RSS feed response')
+      console.warn(`Invalid RSS feed response from ${feed.name}`)
+      return []
     }
 
     const feedData = result.data as RSSFeed
@@ -245,24 +147,130 @@ async function fetchRSSFeed(feed: { name: string; url: string; category: string 
 
     return news
   } catch (error) {
-    console.error(`Error fetching RSS feed from ${feed.name}:`, error)
+    console.warn(`Error fetching RSS feed from ${feed.name}:`, error)
     return []
   }
 }
 
-async function fetchAllNews(customFeeds: CustomFeed[] = []): Promise<NewsItem[]> {
+// Fetch DEFAULT feeds only (Left Column) - with feed preferences
+// Returns a callback that updates state as each feed completes
+async function fetchDefaultNewsIncremental(
+  feedPreferences: FeedPreferences | undefined,
+  onUpdate: (items: NewsItem[]) => void,
+  onProgress?: () => void
+): Promise<void> {
   try {
-    // Try to get from IndexedDB cache
-    const cachedNews = await storage.get<{ data: NewsItem[], timestamp: number }>(STORAGE_KEYS.CACHE)
-    if (cachedNews && Date.now() - cachedNews.timestamp < 2 * 60 * 1000) { // 2 minutes cache
-      return cachedNews.data
+    const cacheKey = feedPreferences ? `default_news_cache_${JSON.stringify(feedPreferences)}` : 'default_news_cache'
+    const cached = await storage.get<{ data: NewsItem[], timestamp: number }>(cacheKey)
+
+    if (cached && Date.now() - cached.timestamp < 2 * 60 * 1000) { // 2 minutes cache
+      onUpdate(cached.data)
+      return
     }
 
-    // Combine default feeds with custom feeds
-    const allFeeds = [...RSS_FEEDS, ...customFeeds]
+    // Filter feeds based on user preferences
+    const feedsToFetch = feedPreferences
+      ? filterEnabledFeeds(RSS_FEEDS, feedPreferences)
+      : RSS_FEEDS
 
-    // Fetch from all RSS feeds in parallel
-    const allNewsPromises = allFeeds.map(feed => fetchRSSFeed(feed))
+    const allNews: NewsItem[] = []
+
+    // Fetch feeds incrementally
+    for (const feed of feedsToFetch) {
+      try {
+        const items = await fetchRSSFeed(feed)
+        allNews.push(...items)
+
+        // Sort by publication date (newest first)
+        allNews.sort((a, b) =>
+          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+        )
+
+        // Update state with current progress
+        onUpdate(allNews.slice(0, 100))
+
+        // Call progress callback if provided
+        if (onProgress) onProgress()
+      } catch (error) {
+        console.error(`Error fetching feed ${feed.name}:`, error)
+        // Still call progress callback on error so counter updates
+        if (onProgress) onProgress()
+      }
+    }
+
+    // Cache the final results
+    await storage.set(cacheKey, { data: allNews.slice(0, 100), timestamp: Date.now() })
+  } catch (error) {
+    console.error('Error in fetchDefaultNewsIncremental:', error)
+  }
+}
+
+// Fetch CUSTOM feeds only (Right Column) - incremental
+async function fetchCustomNewsIncremental(
+  customFeeds: CustomFeed[],
+  onUpdate: (items: NewsItem[]) => void,
+  onProgress?: () => void
+): Promise<void> {
+  if (customFeeds.length === 0) return
+
+  try {
+    const cacheKey = 'custom_news_cache'
+    const cached = await storage.get<{ data: NewsItem[], timestamp: number }>(cacheKey)
+
+    if (cached && Date.now() - cached.timestamp < 2 * 60 * 1000) { // 2 minutes cache
+      onUpdate(cached.data)
+      return
+    }
+
+    const allNews: NewsItem[] = []
+
+    // Fetch feeds incrementally
+    for (const feed of customFeeds) {
+      try {
+        const items = await fetchRSSFeed(feed)
+        allNews.push(...items)
+
+        // Sort by publication date (newest first)
+        allNews.sort((a, b) =>
+          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+        )
+
+        // Update state with current progress
+        onUpdate(allNews.slice(0, 100))
+
+        // Call progress callback if provided
+        if (onProgress) onProgress()
+      } catch (error) {
+        console.error(`Error fetching feed ${feed.name}:`, error)
+        // Still call progress callback on error so counter updates
+        if (onProgress) onProgress()
+      }
+    }
+
+    // Cache the final results
+    await storage.set(cacheKey, { data: allNews.slice(0, 100), timestamp: Date.now() })
+  } catch (error) {
+    console.error('Error in fetchCustomNewsIncremental:', error)
+  }
+}
+
+// Fetch DEFAULT feeds only (Left Column) - with feed preferences (legacy, kept for compatibility)
+async function fetchDefaultNews(feedPreferences?: FeedPreferences): Promise<NewsItem[]> {
+  try {
+    const cacheKey = feedPreferences ? `default_news_cache_${JSON.stringify(feedPreferences)}` : 'default_news_cache'
+    const cached = await storage.get<{ data: NewsItem[], timestamp: number }>(cacheKey)
+
+    if (cached && Date.now() - cached.timestamp < 2 * 60 * 1000) { // 2 minutes cache
+      return cached.data
+    }
+
+    // Filter feeds based on user preferences
+    const feedsToFetch = feedPreferences
+      ? filterEnabledFeeds(RSS_FEEDS, feedPreferences)
+      : RSS_FEEDS
+
+    // Fetch from DEFAULT RSS feeds only
+    const allNewsPromises = feedsToFetch.map(feed => fetchRSSFeed(feed))
     const allNewsArrays = await Promise.all(allNewsPromises)
     const allNews = allNewsArrays.flat()
 
@@ -275,28 +283,79 @@ async function fetchAllNews(customFeeds: CustomFeed[] = []): Promise<NewsItem[]>
     const result = allNews.slice(0, 100)
 
     // Cache the results
-    await storage.set(STORAGE_KEYS.CACHE, { data: result, timestamp: Date.now() })
+    await storage.set(cacheKey, { data: result, timestamp: Date.now() })
 
     return result
   } catch (error) {
-    console.error('Error in fetchAllNews:', error)
+    console.error('Error in fetchDefaultNews:', error)
+    return []
+  }
+}
+
+// Fetch CUSTOM feeds only (Right Column) (legacy, kept for compatibility)
+async function fetchCustomNews(customFeeds: CustomFeed[]): Promise<NewsItem[]> {
+  if (customFeeds.length === 0) return []
+
+  try {
+    const cacheKey = 'custom_news_cache'
+    const cached = await storage.get<{ data: NewsItem[], timestamp: number }>(cacheKey)
+
+    if (cached && Date.now() - cached.timestamp < 2 * 60 * 1000) { // 2 minutes cache
+      return cached.data
+    }
+
+    // Fetch from CUSTOM RSS feeds only
+    const allNewsPromises = customFeeds.map(feed => fetchRSSFeed(feed))
+    const allNewsArrays = await Promise.all(allNewsPromises)
+    const allNews = allNewsArrays.flat()
+
+    // Sort by publication date (newest first)
+    allNews.sort((a, b) =>
+      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+    )
+
+    // Return up to 100 news items maximum
+    const result = allNews.slice(0, 100)
+
+    // Cache the results
+    await storage.set(cacheKey, { data: result, timestamp: Date.now() })
+
+    return result
+  } catch (error) {
+    console.error('Error in fetchCustomNews:', error)
     return []
   }
 }
 
 export default function NewsClient({ initialNews }: NewsClientProps) {
-  const [news, setNews] = useState<NewsItem[]>(initialNews)
-  const [filteredNews, setFilteredNews] = useState<NewsItem[]>(initialNews)
+  // Multi-column layout state
+  const [activeLayout, setActiveLayout] = useState<ColumnLayout | null>(null)
+  const [columnNewsData, setColumnNewsData] = useState<Record<string, NewsItem[]>>({})
+  const [columnFilters, setColumnFilters] = useState<Record<string, { search: string }>>({})
+
+  // Legacy state (kept for backward compatibility during transition)
+  const [defaultNews, setDefaultNews] = useState<NewsItem[]>([])
+  const [filteredDefaultNews, setFilteredDefaultNews] = useState<NewsItem[]>([])
+  const [defaultSearch, setDefaultSearch] = useState('')
+  const [defaultCategory, setDefaultCategory] = useState('All')
+  const [defaultCurrentPage, setDefaultCurrentPage] = useState(1)
+  const [defaultLanguage, setDefaultLanguage] = useState('All')
+
+  // RIGHT COLUMN (Custom Feeds)
+  const [customNews, setCustomNews] = useState<NewsItem[]>([])
+  const [filteredCustomNews, setFilteredCustomNews] = useState<NewsItem[]>([])
+  const [customSearch, setCustomSearch] = useState('')
+  const [customCategory, setCustomCategory] = useState('All')
+  const [customCurrentPage, setCustomCurrentPage] = useState(1)
+
+  // Shared state
   const [loading, setLoading] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [showSearch, setShowSearch] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [loadingFeedsCount, setLoadingFeedsCount] = useState({ total: 0, loaded: 0 })
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null)
   const [drawerLoading, setDrawerLoading] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
   const [isAnimating, setIsAnimating] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
   const [darkMode, setDarkMode] = useState(false)
 
   // Custom feeds state
@@ -304,8 +363,61 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
   const [showAddFeedDialog, setShowAddFeedDialog] = useState(false)
   const [newFeedName, setNewFeedName] = useState('')
   const [newFeedUrl, setNewFeedUrl] = useState('')
-  const [newFeedCategory, setNewFeedCategory] = useState('Technology')
+  const [newFeedCategory, setNewFeedCategory] = useState('All')
   const [isAddingFeed, setIsAddingFeed] = useState(false)
+
+  // Feed preferences state
+  const [feedPreferences, setFeedPreferences] = useState<FeedPreferences | null>(null)
+  const [showFeedSettings, setShowFeedSettings] = useState(false)
+  const [showColumnSettings, setShowColumnSettings] = useState(false)
+
+  // Fetch all news with useCallback - incremental updates
+  const fetchAllNews = useCallback(async (showLoading = true) => {
+    try {
+      if (showLoading) setLoading(true)
+      else setIsRefreshing(true)
+
+      // Calculate total feeds to fetch
+      const defaultFeedsToFetch = feedPreferences
+        ? filterEnabledFeeds(RSS_FEEDS, feedPreferences)
+        : RSS_FEEDS
+      const totalFeeds = defaultFeedsToFetch.length + customFeeds.length
+
+      // Initialize loading counter
+      setLoadingFeedsCount({ total: totalFeeds, loaded: 0 })
+
+      // Initialize empty arrays
+      setDefaultNews([])
+      setFilteredDefaultNews([])
+      setCustomNews([])
+      setFilteredCustomNews([])
+
+      // Create a counter callback for progress updates
+      let loadedCount = 0
+      const updateProgress = () => {
+        loadedCount++
+        setLoadingFeedsCount({ total: totalFeeds, loaded: loadedCount })
+      }
+
+      // Fetch default and custom news incrementally in parallel
+      await Promise.all([
+        fetchDefaultNewsIncremental(feedPreferences || undefined, (items) => {
+          setDefaultNews(items)
+          setFilteredDefaultNews(items)
+        }, updateProgress),
+        fetchCustomNewsIncremental(customFeeds, (items) => {
+          setCustomNews(items)
+          setFilteredCustomNews(items)
+        }, updateProgress)
+      ])
+
+      setLastUpdate(new Date())
+    } catch (error) {
+      console.error('Failed to fetch news:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [customFeeds, feedPreferences])
 
   // Load custom feeds from IndexedDB on mount
   useEffect(() => {
@@ -322,11 +434,112 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
     loadCustomFeeds()
   }, [])
 
+  // Load feed preferences from IndexedDB on mount
+  useEffect(() => {
+    const loadFeedPreferences = async () => {
+      try {
+        const prefs = await getFeedPreferences()
+        setFeedPreferences(prefs)
+      } catch (error) {
+        console.error('Failed to load feed preferences:', error)
+      }
+    }
+    loadFeedPreferences()
+  }, [])
+
+  // Load active column layout on mount
+  useEffect(() => {
+    const loadColumnLayout = async () => {
+      try {
+        const layout = await getActiveLayout()
+        setActiveLayout(layout)
+
+        // Initialize column filters
+        if (layout) {
+          const filters: Record<string, { search: string }> = {}
+          layout.columns.forEach(col => {
+            filters[col.id] = { search: '' }
+          })
+          setColumnFilters(filters)
+        }
+      } catch (error) {
+        console.error('Failed to load column layout:', error)
+      }
+    }
+    loadColumnLayout()
+  }, [])
+
+  // Fetch news for each column based on layout - incremental updates
+  useEffect(() => {
+    const fetchColumnNews = async () => {
+      if (!activeLayout) return
+
+      const feedsToFetch = filterEnabledFeeds(RSS_FEEDS, feedPreferences || { enabledFeeds: [], blockedFeeds: [], favoriteFeeds: [], hiddenCategories: [] })
+
+      for (const column of activeLayout.columns) {
+        const columnFeeds = getFeedsForColumn(feedsToFetch, customFeeds, column)
+
+        // Initialize empty array for this column
+        setColumnNewsData(prev => ({ ...prev, [column.id]: [] }))
+
+        // Fetch feeds incrementally - update state as each completes
+        for (const feed of columnFeeds) {
+          try {
+            const feedItems = await fetchRSSFeed(feed)
+
+            setColumnNewsData(prev => {
+              const currentItems = prev[column.id] || []
+              const updatedItems = [...currentItems, ...feedItems]
+
+              // Sort by publication date
+              updatedItems.sort((a, b) =>
+                new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+              )
+
+              // Keep only top 100
+              return {
+                ...prev,
+                [column.id]: updatedItems.slice(0, 100)
+              }
+            })
+          } catch (error) {
+            console.error(`Error fetching news for feed ${feed.name}:`, error)
+          }
+        }
+
+        setLastUpdate(new Date())
+      }
+    }
+
+    fetchColumnNews()
+  }, [activeLayout, customFeeds, feedPreferences])
+
+  // Initialize with initialNews prop from server-side rendering
+  useEffect(() => {
+    if (initialNews && initialNews.length > 0) {
+      // Separate default and custom news from initial data
+      const defaultFeedNames = new Set(RSS_FEEDS.map(f => f.name))
+      const defaultNewsData = initialNews.filter(item => defaultFeedNames.has(item.source))
+      const customNewsData = initialNews.filter(item => !defaultFeedNames.has(item.source))
+
+      setDefaultNews(defaultNewsData)
+      setFilteredDefaultNews(defaultNewsData)
+      setCustomNews(customNewsData)
+      setFilteredCustomNews(customNewsData)
+      setLastUpdate(new Date())
+    } else {
+      // No initial data, fetch from API
+      fetchAllNews(true)
+    }
+    // Only run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Effect to sync drawer loading with selected news content
   useEffect(() => {
     if (selectedNews) {
-      // Check if content exists in the current selectedNews or in the news array
-      const newsWithContent = news.find(n => n.id === selectedNews.id && n.fullContent)
+      const allNews = [...defaultNews, ...customNews]
+      const newsWithContent = allNews.find(n => n.id === selectedNews.id && n.fullContent)
       if (newsWithContent?.fullContent) {
         setDrawerLoading(false)
       } else if (!selectedNews.fullContent && !selectedNews.isFetchingFullContent) {
@@ -335,8 +548,9 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
     } else {
       setDrawerLoading(false)
     }
-  }, [selectedNews?.id, selectedNews?.fullContent, selectedNews?.isFetchingFullContent, news])
+  }, [selectedNews, defaultNews, customNews])
 
+  // Opening animation and auto-refresh setup
   useEffect(() => {
     // Opening animation
     setTimeout(() => {
@@ -345,11 +559,11 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
 
     // Auto-refresh every 1 minute
     const refreshInterval = setInterval(() => {
-      fetchNews(false)
+      fetchAllNews(false)
     }, 60000)
 
     return () => clearInterval(refreshInterval)
-  }, [])
+  }, [fetchAllNews])
 
   // Apply dark mode class to document
   useEffect(() => {
@@ -360,44 +574,59 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
     }
   }, [darkMode])
 
+  // Filter DEFAULT news (Left Column)
   useEffect(() => {
-    let filtered = news
+    let filtered = defaultNews
 
     // Filter by category
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter(item => item.category === selectedCategory)
+    if (defaultCategory !== 'All') {
+      filtered = filtered.filter(item => item.category === defaultCategory)
+    }
+
+    // Filter by language
+    if (defaultLanguage !== 'All') {
+      filtered = filtered.filter(item => {
+        const feed = RSS_FEEDS.find(f => f.name === item.source)
+        return feed && feed.language === defaultLanguage
+      })
     }
 
     // Filter by search
-    if (searchQuery.trim()) {
+    if (defaultSearch.trim()) {
+      const searchLower = defaultSearch.toLowerCase()
       filtered = filtered.filter(item =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.fullContent && item.fullContent.toLowerCase().includes(searchQuery.toLowerCase()))
+        item.title.toLowerCase().includes(searchLower) ||
+        item.description.toLowerCase().includes(searchLower) ||
+        item.content.toLowerCase().includes(searchLower) ||
+        (item.fullContent && item.fullContent.toLowerCase().includes(searchLower))
       )
     }
 
-    setFilteredNews(filtered)
-    setCurrentPage(1)
-  }, [searchQuery, selectedCategory, news])
+    setFilteredDefaultNews(filtered)
+    setDefaultCurrentPage(1)
+  }, [defaultSearch, defaultCategory, defaultLanguage, defaultNews])
 
-  const fetchNews = async (showLoading = true) => {
-    try {
-      if (showLoading) setLoading(true)
-      else setIsRefreshing(true)
+  // Filter CUSTOM news (Right Column)
+  useEffect(() => {
+    let filtered = customNews
 
-      const data = await fetchAllNews(customFeeds)
-      setNews(data)
-      setFilteredNews(data)
-      setLastUpdate(new Date())
-    } catch (error) {
-      console.error('Failed to fetch news:', error)
-    } finally {
-      setLoading(false)
-      setIsRefreshing(false)
+    if (customCategory !== 'All') {
+      filtered = filtered.filter(item => item.category === customCategory)
     }
-  }
+
+    if (customSearch.trim()) {
+      const searchLower = customSearch.toLowerCase()
+      filtered = filtered.filter(item =>
+        item.title.toLowerCase().includes(searchLower) ||
+        item.description.toLowerCase().includes(searchLower) ||
+        item.content.toLowerCase().includes(searchLower) ||
+        (item.fullContent && item.fullContent.toLowerCase().includes(searchLower))
+      )
+    }
+
+    setFilteredCustomNews(filtered)
+    setCustomCurrentPage(1)
+  }, [customSearch, customCategory, customNews])
 
   // Add custom feed
   const addCustomFeed = async () => {
@@ -431,8 +660,8 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
       setShowAddFeedDialog(false)
 
       // Clear cache and refresh news to include new feed
-      await storage.remove(STORAGE_KEYS.CACHE)
-      await fetchNews(true)
+      await storage.remove('custom_news_cache')
+      await fetchAllNews(true)
     } catch (error) {
       console.error('Failed to add custom feed:', error)
       alert('Invalid URL format!')
@@ -448,14 +677,14 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
     await storage.set(STORAGE_KEYS.CUSTOM_FEEDS, updatedFeeds)
 
     // Clear cache and refresh
-    await storage.remove(STORAGE_KEYS.CACHE)
-    await fetchNews(true)
+    await storage.remove('custom_news_cache')
+    await fetchAllNews(true)
   }
 
   const clearCache = async () => {
     try {
       await storage.clear()
-      await fetchNews(true)
+      await fetchAllNews(true)
     } catch (error) {
       console.error('Failed to clear cache:', error)
     }
@@ -463,11 +692,16 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
 
   const fetchFullContent = async (newsItem: NewsItem) => {
     try {
-      setNews(prev => prev.map(item =>
-        item.id === newsItem.id
-          ? { ...item, isFetchingFullContent: true }
-          : item
-      ))
+      // Update both default and custom news arrays
+      const updateArray = (items: NewsItem[]) =>
+        items.map(item =>
+          item.id === newsItem.id
+            ? { ...item, isFetchingFullContent: true }
+            : item
+        )
+
+      setDefaultNews(updateArray(defaultNews))
+      setCustomNews(updateArray(customNews))
 
       // Check cached content in IndexedDB first
       const cacheKey = `content_${newsItem.id}`
@@ -512,17 +746,17 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
   }
 
   const updateNewsItemWithContent = (id: string, content: string, isFetching: boolean) => {
-    setNews(prev => prev.map(item =>
-      item.id === id
-        ? { ...item, fullContent: content, isFetchingFullContent: isFetching }
-        : item
-    ))
+    const updateFunc = (items: NewsItem[]) =>
+      items.map(item =>
+        item.id === id
+          ? { ...item, fullContent: content, isFetchingFullContent: isFetching }
+          : item
+      )
 
-    setFilteredNews(prev => prev.map(item =>
-      item.id === id
-        ? { ...item, fullContent: content, isFetchingFullContent: isFetching }
-        : item
-    ))
+    setDefaultNews(updateFunc(defaultNews))
+    setCustomNews(updateFunc(customNews))
+    setFilteredDefaultNews(updateFunc(filteredDefaultNews))
+    setFilteredCustomNews(updateFunc(filteredCustomNews))
 
     // Stop drawer loading when content is loaded
     if (!isFetching) {
@@ -561,7 +795,15 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
 
     const date = new Date(dateString)
     const now = new Date()
+
+    // Validate date
+    if (isNaN(date.getTime())) return 'Invalid date'
+
+    // Prevent negative differences (future dates)
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+
+    // If date is in the future, show "Just now"
+    if (diffInSeconds < 0) return 'Just now'
 
     if (diffInSeconds < 60) return `${diffInSeconds}s ago`
     if (diffInSeconds < 3600) {
@@ -589,15 +831,30 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
     return `${Math.floor(diffInSeconds / 3600)}h ago`
   }
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredNews.length / NEWS_PER_PAGE)
-  const startIndex = (currentPage - 1) * NEWS_PER_PAGE
-  const endIndex = startIndex + NEWS_PER_PAGE
-  const currentNews = filteredNews.slice(startIndex, endIndex)
+  // Pagination calculations for DEFAULT news
+  const defaultTotalPages = Math.ceil(filteredDefaultNews.length / NEWS_PER_PAGE)
+  const defaultStartIndex = (defaultCurrentPage - 1) * NEWS_PER_PAGE
+  const defaultEndIndex = defaultStartIndex + NEWS_PER_PAGE
+  const currentDefaultNews = filteredDefaultNews.slice(defaultStartIndex, defaultEndIndex)
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+  // Pagination calculations for CUSTOM news
+  const customTotalPages = Math.ceil(filteredCustomNews.length / NEWS_PER_PAGE)
+  const customStartIndex = (customCurrentPage - 1) * NEWS_PER_PAGE
+  const customEndIndex = customStartIndex + NEWS_PER_PAGE
+  const currentCustomNews = filteredCustomNews.slice(customStartIndex, customEndIndex)
+
+  const handleDefaultPageChange = (page: number) => {
+    setDefaultCurrentPage(page)
+  }
+
+  const handleCustomPageChange = (page: number) => {
+    setCustomCurrentPage(page)
+  }
+
+  // Handle category change - updates both columns simultaneously
+  const handleCategoryChange = (category: string) => {
+    setDefaultCategory(category)
+    setCustomCategory(category)
   }
 
   if (isAnimating) {
@@ -642,7 +899,7 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
               <p className={`text-xs font-bold font-mono tracking-widest ${darkMode ? 'text-white' : 'text-white'}`}>SYSTEM</p>
             </div>
 
-            {/* Technology Category with Dropdown - Retro Style */}
+            {/* Category Dropdown - Retro Style */}
             <div className="mb-4">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -650,17 +907,46 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
                     variant="ghost"
                     className={`w-full justify-start text-xs font-bold font-mono uppercase tracking-widest px-3 py-2 border-2 transition-all retro-button ${darkMode ? 'text-white hover:bg-white hover:text-black border-gray-600 bg-gray-800' : 'text-black hover:bg-black hover:text-white border-black bg-white'}`}
                   >
-                    <span>[ TECHNOLOGY ]</span>
+                    <span>[ CATEGORY ]</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className={`w-48 retro-dropdown ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-black bg-white'}`} align="start">
-                  {TECHNOLOGY_CATEGORIES.map(category => (
+                  {CATEGORY_OPTIONS.map(category => (
                     <DropdownMenuItem
                       key={category.value}
-                      onClick={() => setSelectedCategory(category.value)}
-                      className={`text-xs font-mono ${selectedCategory === category.value ? (darkMode ? 'bg-white text-gray-900' : 'bg-black text-white') : (darkMode ? 'text-white hover:bg-gray-700' : 'text-black hover:bg-gray-200')}`}
+                      onClick={() => handleCategoryChange(category.value)}
+                      className={`text-xs font-mono ${(defaultCategory === category.value) ? (darkMode ? 'bg-white text-gray-900' : 'bg-black text-white') : (darkMode ? 'text-white hover:bg-gray-700' : 'text-black hover:bg-gray-200')}`}
                     >
-                      {selectedCategory === category.value ? '▸ ' : '  '}{category.name}
+                      {(defaultCategory === category.value) ? '▸ ' : '  '}{category.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Language Filter - Retro Style */}
+            <div className="mb-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-start text-xs font-bold font-mono uppercase tracking-widest px-3 py-2 border-2 transition-all retro-button ${darkMode ? 'text-white hover:bg-white hover:text-black border-gray-600 bg-gray-800' : 'text-black hover:bg-black hover:text-white border-black bg-white'}`}
+                  >
+                    <span>[ LANGUAGE ]</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className={`w-48 retro-dropdown ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-black bg-white'}`} align="start">
+                  {[
+                    { name: 'All Languages', value: 'All' },
+                    { name: 'English', value: 'en' },
+                    { name: 'Türkçe', value: 'tr' },
+                  ].map(lang => (
+                    <DropdownMenuItem
+                      key={lang.value}
+                      onClick={() => setDefaultLanguage(lang.value)}
+                      className={`text-xs font-mono ${(defaultLanguage === lang.value) ? (darkMode ? 'bg-white text-gray-900' : 'bg-black text-white') : (darkMode ? 'text-white hover:bg-gray-700' : 'text-black hover:bg-gray-200')}`}
+                    >
+                      {(defaultLanguage === lang.value) ? '▸ ' : '  '}{lang.name}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
@@ -671,16 +957,41 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
             <div className={`mb-4 p-3 border-4 border-double text-center retro-selected-box ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-black bg-black'}`}>
               <p className={`text-xs font-mono uppercase tracking-wider mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>[SELECTED]</p>
               <p className={`text-sm font-bold font-mono tracking-wider ${darkMode ? 'text-white' : 'text-white'}`}>
-                {selectedCategory}
+                {defaultCategory}
+              </p>
+              <p className={`text-xs font-mono tracking-wider mt-1 ${defaultLanguage === 'All' ? (darkMode ? 'text-gray-400' : 'text-gray-500') : (darkMode ? 'text-white' : 'text-white')}`}>
+                {defaultLanguage === 'All' ? 'All Languages' : defaultLanguage === 'tr' ? 'Türkçe' : 'English'}
               </p>
             </div>
 
             {/* Stats - Retro Style */}
             <div className={`mb-4 p-2 border-2 retro-stats ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-black bg-gray-100'}`}>
               <div className="flex items-center justify-between">
-                <p className={`text-xs font-mono uppercase ${darkMode ? 'text-white' : 'text-black'}`}>Articles:</p>
-                <p className={`text-xs font-bold font-mono ${darkMode ? 'text-white' : 'text-black'}`}>{filteredNews.length}</p>
+                <p className={`text-xs font-mono uppercase ${darkMode ? 'text-white' : 'text-black'}`}>Default:</p>
+                <p className={`text-xs font-bold font-mono ${darkMode ? 'text-white' : 'text-black'}`}>{filteredDefaultNews.length}</p>
               </div>
+              <div className="flex items-center justify-between mt-1">
+                <p className={`text-xs font-mono uppercase ${darkMode ? 'text-white' : 'text-black'}`}>Custom:</p>
+                <p className={`text-xs font-bold font-mono ${darkMode ? 'text-white' : 'text-black'}`}>{filteredCustomNews.length}</p>
+              </div>
+
+              {/* Loading Progress */}
+              {loading && loadingFeedsCount.total > 0 && (
+                <div className="mt-2 pt-2 border-t-2" style={{ borderColor: darkMode ? '#4b5563' : '#000' }}>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className={`text-xs font-mono uppercase ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loading:</p>
+                    <p className={`text-xs font-bold font-mono ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
+                      {loadingFeedsCount.loaded}/{loadingFeedsCount.total}
+                    </p>
+                  </div>
+                  <div className={`h-1.5 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                    <div
+                      className="h-full bg-yellow-400 transition-all duration-300"
+                      style={{ width: `${(loadingFeedsCount.loaded / loadingFeedsCount.total) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Add Feed Dialog */}
@@ -688,7 +999,7 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
               <DialogTrigger asChild>
                 <Button
                   variant="ghost"
-                  className={`w-full mb-4 text-xs font-bold font-mono uppercase border-2 px-3 py-2 transition-all ${darkMode ? 'text-white hover:bg-white hover:text-black border-gray-600 bg-gray-800' : 'text-black hover:bg-black hover:text-white border-black bg-white'}`}
+                  className={`w-full mb-2 text-xs font-bold font-mono uppercase border-2 px-3 py-2 transition-all ${darkMode ? 'text-white hover:bg-white hover:text-black border-gray-600 bg-gray-800' : 'text-black hover:bg-black hover:text-white border-black bg-white'}`}
                 >
                   <Plus className="w-3 h-3 mr-1" />
                   ADD FEED
@@ -724,7 +1035,7 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className={`${darkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-black'}`}>
-                        {TECHNOLOGY_CATEGORIES.filter(c => c.value !== 'All').map(category => (
+                        {CATEGORY_OPTIONS.filter(c => c.value !== 'All').map(category => (
                           <SelectItem key={category.value} value={category.value} className="font-mono">
                             {category.name}
                           </SelectItem>
@@ -751,6 +1062,26 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
                 </div>
               </DialogContent>
             </Dialog>
+
+            {/* Feed Settings Button */}
+            <Button
+              variant="ghost"
+              onClick={() => setShowFeedSettings(true)}
+              className={`w-full mb-2 text-xs font-bold font-mono uppercase border-2 px-3 py-2 transition-all ${darkMode ? 'text-white hover:bg-white hover:text-black border-gray-600 bg-gray-800' : 'text-black hover:bg-black hover:text-white border-black bg-white'}`}
+            >
+              <Settings className="w-3 h-3 mr-1" />
+              FEED SETTINGS
+            </Button>
+
+            {/* Column Layout Button */}
+            <Button
+              variant="ghost"
+              onClick={() => setShowColumnSettings(true)}
+              className={`w-full mb-4 text-xs font-bold font-mono uppercase border-2 px-3 py-2 transition-all ${darkMode ? 'text-white hover:bg-white hover:text-black border-gray-600 bg-gray-800' : 'text-black hover:bg-black hover:text-white border-black bg-white'}`}
+            >
+              <LayoutTemplate className="w-3 h-3 mr-1" />
+              COLUMN LAYOUT
+            </Button>
 
             {/* Custom Feeds List */}
             {customFeeds.length > 0 && (
@@ -783,11 +1114,11 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
         </div>
       </aside>
 
-      {/* Main Content */}
+      {/* Main Content - TWO COLUMN LAYOUT */}
       <div className="flex-1 ml-0 lg:ml-48">
         {/* Header - Retro Style */}
         <header className={`sticky top-0 z-30 px-2 sm:px-4 py-2 sm:py-3 border-b-4 retro-header ${darkMode ? 'bg-gray-900 border-gray-600' : 'bg-white border-black'}`}>
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between gap-2 sm:gap-4">
               <div className="flex items-center gap-2 sm:gap-3">
                 {/* Retro Logo */}
@@ -799,34 +1130,6 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
                     <span className={`text-xl sm:text-2xl font-black tracking-wider font-mono retro-title ${darkMode ? 'text-white' : 'text-black'}`}>RETRUI</span>
                     <span className={`block text-xs font-mono tracking-widest ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>NEWS PORTAL</span>
                   </div>
-                </div>
-
-                {/* Mobile Category Dropdown - Retro */}
-                <div className="lg:hidden ml-2 sm:ml-4">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={`text-xs font-bold font-mono uppercase border-2 sm:border-4 sm:border-double px-2 sm:px-3 py-1.5 sm:py-2 retro-mobile-filter hover:bg-white hover:text-black transition-all ${darkMode ? 'text-white border-gray-600 bg-gray-800' : 'text-black border-black bg-white'}`}
-                      >
-                        <span className="flex items-center gap-2">
-                          [{selectedCategory}]
-                        </span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className={`w-48 retro-dropdown ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-black bg-white'}`} align="start">
-                      {TECHNOLOGY_CATEGORIES.map(category => (
-                        <DropdownMenuItem
-                          key={category.value}
-                          onClick={() => setSelectedCategory(category.value)}
-                          className={`text-xs font-mono ${selectedCategory === category.value ? (darkMode ? 'bg-white text-gray-900' : 'bg-black text-white') : (darkMode ? 'text-white hover:bg-gray-700' : 'text-black hover:bg-gray-200')}`}
-                        >
-                          {selectedCategory === category.value ? '▸ ' : '  '}{category.name}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </div>
               </div>
 
@@ -847,7 +1150,7 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => fetchNews(true)}
+                  onClick={() => fetchAllNews(true)}
                   disabled={isRefreshing}
                   className={`text-xs font-bold font-mono uppercase border-2 px-2 sm:px-3 py-1.5 sm:py-2 retro-header-button transition-all ${darkMode ? 'text-white border-gray-600 bg-gray-800 hover:bg-white hover:text-black' : 'text-black border-black bg-white hover:bg-black hover:text-white'}`}
                   title="Refresh news"
@@ -867,197 +1170,165 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
                   <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline ml-1">CLEAR</span>
                 </Button>
-
-                {/* Search - Retro */}
-                <div className="relative">
-                  {showSearch ? (
-                    <div className="flex items-center gap-1 sm:gap-2 retro-search-box">
-                      <Input
-                        type="text"
-                        placeholder="SEARCH..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className={`w-32 sm:w-48 md:w-64 border-2 sm:border-4 sm:border-double rounded-none px-2 sm:px-3 py-1.5 sm:py-2 focus-visible:ring-0 text-black font-mono text-xs sm:text-sm retro-input ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-black text-black'}`}
-                        autoFocus
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setShowSearch(false)
-                          setSearchQuery('')
-                        }}
-                        className={`text-xs font-bold font-mono uppercase border-2 px-2 sm:px-3 py-1.5 sm:py-2 retro-header-button transition-all ${darkMode ? 'text-white border-gray-600 bg-gray-800 hover:bg-white hover:text-black' : 'text-black border-black bg-white hover:bg-black hover:text-white'}`}
-                      >
-                        <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowSearch(true)}
-                      className={`text-xs font-bold font-mono uppercase border-2 px-2 sm:px-3 py-1.5 sm:py-2 retro-header-button transition-all ${darkMode ? 'text-white border-gray-600 bg-gray-800 hover:bg-white hover:text-black' : 'text-black border-black bg-white hover:bg-black hover:text-white'}`}
-                    >
-                      <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      <span className="hidden sm:inline ml-1">SEARCH</span>
-                    </Button>
-                  )}
-                </div>
               </div>
             </div>
           </div>
         </header>
 
-        {/* News List */}
-        <main className="px-3 sm:px-4 py-4 sm:py-6 pb-40 sm:pb-32">
-          <div className="max-w-3xl mx-auto w-full">
-            {loading ? (
-              // Loading Skeleton - Retro Style
-              Array.from({ length: 6 }).map((_, i) => (
-                <article key={i} className={`py-4 px-4 border-b-2 retro-skeleton-item ${darkMode ? 'border-gray-700' : 'border-black'}`}>
-                  <div className="space-y-2 animate-pulse retro-skeleton">
-                    <div className={`h-4 w-32 retro-skeleton-bar ${darkMode ? 'bg-gray-700' : 'bg-black bg-opacity-20'}`}></div>
-                    <div className={`h-6 w-full retro-skeleton-bar ${darkMode ? 'bg-gray-600' : 'bg-black bg-opacity-30'}`}></div>
-                    <div className={`h-4 w-full retro-skeleton-bar ${darkMode ? 'bg-gray-700' : 'bg-black bg-opacity-10'}`}></div>
-                    <div className={`h-4 w-2/3 retro-skeleton-bar ${darkMode ? 'bg-gray-700' : 'bg-black bg-opacity-10'}`}></div>
-                    <div className={`h-4 w-48 retro-skeleton-bar ${darkMode ? 'bg-gray-600' : 'bg-black bg-opacity-15'}`}></div>
+        {/* MULTI-COLUMN NEWS LAYOUT (TweetDeck Style) */}
+        <main className="px-2 sm:px-4 py-4 sm:py-6 pb-40 sm:pb-32">
+          <div className="max-w-full mx-auto">
+            {/* Layout Info */}
+            {activeLayout && (
+              <div className={`mb-4 p-3 border-2 ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-black bg-gray-50'}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className={`text-sm font-bold font-mono uppercase ${darkMode ? 'text-white' : 'text-black'}`}>
+                      [{activeLayout.name}]
+                    </h2>
+                    <p className={`text-xs font-mono ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {activeLayout.columns.length} columns
+                    </p>
                   </div>
-                </article>
-              ))
-            ) : filteredNews.length === 0 ? (
-              // Empty State - Retro Style
-              <div className="py-24 text-center retro-empty-state">
-                <div className="inline-block p-8 border-4 border-double bg-white retro-empty-box">
-                  <p className={`text-lg font-bold font-mono uppercase mb-2 retro-empty-box ${darkMode ? 'text-white border-gray-600 bg-gray-800' : 'text-black border-black bg-white'}`}>[ NO RESULTS ]</p>
-                  <p className={`text-sm font-mono ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Try different filters</p>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowColumnSettings(true)}
+                    className={`text-xs font-mono border-2 ${darkMode ? 'text-white border-gray-600 bg-gray-800 hover:bg-white hover:text-black' : 'text-black border-black bg-white hover:bg-black hover:text-white'}`}
+                  >
+                    <LayoutTemplate className="w-3 h-3 mr-1" />
+                    EDIT LAYOUT
+                  </Button>
                 </div>
               </div>
-            ) : (
-              <>
-                {/* News List - Retro Style */}
-                <div className="space-y-1 retro-news-list">
-                  {currentNews.map((item, index) => (
-                    <article
-                      key={item.id}
-                      className={`py-3 px-3 sm:py-4 sm:px-4 border-b-2 cursor-pointer hover:bg-black hover:text-white transition-all animate-fade-in retro-news-item ${darkMode ? 'border-gray-700' : 'border-black'}`}
-                      style={{ animationDelay: `${Math.min(index * 0.05, 0.5)}s` }}
-                      onClick={() => openNews(item)}
-                    >
-                      <div className="space-y-2">
-                        {/* Category and Time - Retro */}
-                        <div className="flex items-center justify-between retro-meta">
-                          <span className={`text-xs font-bold font-mono uppercase tracking-widest retro-category hover:text-white ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            [{item.category}]
-                          </span>
-                          <div className={`flex items-center gap-1 text-xs font-mono hover:text-gray-300 ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>
-                            <Clock className="w-3 h-3" />
-                            <time dateTime={item.publishedAt}>{formatDate(item.publishedAt)}</time>
-                          </div>
+            )}
+
+            {/* Dynamic Columns */}
+            {activeLayout && (
+              <div
+                className="flex gap-4 overflow-x-auto"
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: activeLayout.columns.map(c => `${c.width}%`).join(' ')
+                }}
+              >
+                {activeLayout.columns
+                  .sort((a, b) => a.order - b.order)
+                  .map((column) => {
+                    const columnNews = columnNewsData[column.id] || []
+                    const searchQuery = columnFilters[column.id]?.search || ''
+
+                    // Filter by search
+                    const filteredNews = searchQuery.trim()
+                      ? columnNews.filter(item =>
+                          item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          item.description.toLowerCase().includes(searchQuery.toLowerCase())
+                        )
+                      : columnNews
+
+                    const totalPages = Math.ceil(filteredNews.length / NEWS_PER_PAGE)
+
+                    return (
+                      <div
+                        key={column.id}
+                        className={`border-2 ${darkMode ? 'border-gray-600' : 'border-black'} p-3 flex flex-col min-w-0`}
+                        style={{ minWidth: column.collapsed ? '60px' : '300px' }}
+                      >
+                        {/* Column Header */}
+                        <div className={`flex items-center justify-between mb-4 pb-2 border-b-2 ${darkMode ? 'border-gray-600' : 'border-black'}`}>
+                          {!column.collapsed && (
+                            <>
+                              <h2 className={`text-sm font-bold font-mono uppercase ${darkMode ? 'text-white' : 'text-black'}`}>
+                                [{column.title}]
+                              </h2>
+                              <span className={`text-xs font-mono ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                {filteredNews.length} articles
+                              </span>
+                            </>
+                          )}
+                          <button
+                            onClick={() => {
+                              // Toggle collapse (would need to implement)
+                            }}
+                            className={`p-1 ${darkMode ? 'text-white hover:bg-gray-700' : 'text-black hover:bg-gray-200'}`}
+                          >
+                            {column.collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                          </button>
                         </div>
 
-                        {/* Title - Retro */}
-                        <h2 className={`text-base sm:text-lg font-bold leading-tight hover:text-white transition-colors retro-title font-mono ${darkMode ? 'text-white' : 'text-black'}`}>
-                          {item.title}
-                        </h2>
+                        {!column.collapsed && (
+                          <>
+                            {/* Search */}
+                            <div className="mb-3">
+                              <Input
+                                type="text"
+                                placeholder={`SEARCH ${column.title.toUpperCase()}...`}
+                                value={searchQuery}
+                                onChange={(e) =>
+                                  setColumnFilters(prev => ({
+                                    ...prev,
+                                    [column.id]: { search: e.target.value }
+                                  }))
+                                }
+                                className={`border-2 rounded-none px-3 py-2 focus-visible:ring-0 font-mono text-xs ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-black text-black'}`}
+                              />
+                            </div>
 
-                        {/* Description - Retro */}
-                        <p className={`text-sm leading-relaxed line-clamp-2 hover:text-gray-200 retro-description ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                          {item.description}
-                        </p>
-
-                        {/* Source - Retro */}
-                        <span className={`text-xs font-mono hover:text-gray-300 retro-source ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>
-                          SOURCE: {item.source.toUpperCase()}
-                        </span>
+                            {/* News List (paginated) */}
+                            <div className="space-y-1 flex-1">
+                              {filteredNews.length === 0 ? (
+                                <div className="py-12 text-center">
+                                  <p className={`text-sm font-mono ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    [ NO NEWS ]
+                                  </p>
+                                </div>
+                              ) : (
+                                filteredNews.slice(0, NEWS_PER_PAGE).map((item) => (
+                                  <article
+                                    key={item.id}
+                                    className={`py-3 px-3 border-b cursor-pointer hover:bg-black hover:text-white transition-all ${darkMode ? 'border-gray-700' : 'border-black'}`}
+                                    onClick={() => openNews(item)}
+                                  >
+                                    <div className="space-y-2">
+                                      <div className="flex items-center justify-between">
+                                        <span
+                                          className="text-xs font-bold font-mono uppercase"
+                                          style={{ color: feedPreferences ? getFeedColor(item.source, item.category, feedPreferences) : (darkMode ? '#9ca3af' : '#6b7280') }}
+                                        >
+                                          [{item.category}]
+                                        </span>
+                                        <div className={`flex items-center gap-1 text-xs font-mono ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>
+                                          <Clock className="w-3 h-3" />
+                                          <time>{formatDate(item.publishedAt)}</time>
+                                        </div>
+                                      </div>
+                                      <h2 className={`text-sm font-bold leading-tight font-mono ${darkMode ? 'text-white' : 'text-black'}`}>
+                                        {item.title}
+                                      </h2>
+                                      <p className={`text-xs leading-relaxed line-clamp-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                        {item.description}
+                                      </p>
+                                      <span className={`text-xs font-mono ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>
+                                        SOURCE: {item.source.toUpperCase()}
+                                      </span>
+                                    </div>
+                                  </article>
+                                ))
+                              )}
+                            </div>
+                          </>
+                        )}
                       </div>
-                    </article>
-                  ))}
-                </div>
-
-                {/* Pagination - Retro Style */}
-                {totalPages > 1 && (
-                  <nav aria-label="News pagination" className={`mt-6 sm:mt-8 pt-4 sm:pt-6 border-t-4 retro-pagination ${darkMode ? 'border-gray-600' : 'border-black'}`}>
-                    <div className="flex items-center justify-center gap-1 sm:gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className={`text-xs font-bold font-mono uppercase border-2 px-2 sm:px-3 py-1.5 sm:py-2 retro-pagination-button transition-all disabled:opacity-30 disabled:cursor-not-allowed ${darkMode ? 'text-white border-gray-600 bg-gray-800 hover:bg-white hover:text-black' : 'text-black border-black bg-white hover:bg-black hover:text-white'}`}
-                        aria-label="Previous page"
-                      >
-                        <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        <span className="hidden sm:inline ml-1">PREV</span>
-                      </Button>
-
-                      {/* Page numbers - CSS hides extra numbers on mobile */}
-                      <div className="flex items-center gap-0.5 sm:gap-1 retro-page-numbers">
-                        {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
-                          const maxPages = 5
-                          let pageNum
-                          if (totalPages <= maxPages) {
-                            pageNum = i + 1
-                          } else if (currentPage <= Math.floor(maxPages / 2)) {
-                            pageNum = i < maxPages - 2 ? i + 1 : (i === maxPages - 2 ? -1 : totalPages)
-                          } else if (currentPage >= totalPages - Math.floor(maxPages / 2) + 1) {
-                            pageNum = i < 2 ? i + 1 : (i === 2 ? -1 : totalPages - maxPages + 1 + i)
-                          } else {
-                            pageNum = i === 0 ? 1 : (i === 1 ? -1 : (i === maxPages - 1 ? totalPages : currentPage - Math.floor(maxPages / 2) + i))
-                          }
-
-                          if (pageNum === -1) {
-                            return (
-                              <span key={i} className={`px-1.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-mono font-bold retro-ellipsis ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                                ...
-                              </span>
-                            )
-                          }
-
-                          return (
-                            <Button
-                              key={i}
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handlePageChange(pageNum)}
-                              className={`min-w-[32px] sm:min-w-[40px] text-xs font-bold font-mono border-2 py-1.5 sm:py-2 retro-page-number ${currentPage === pageNum
-                                ? darkMode ? 'bg-white text-gray-900 hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'
-                                : darkMode ? 'bg-gray-800 text-white hover:bg-gray-700 border-gray-600' : 'bg-white text-black hover:bg-gray-200 border-black'
-                                }`}
-                            >
-                              {pageNum}
-                            </Button>
-                          )
-                        })}
-                      </div>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className={`text-xs font-bold font-mono uppercase border-2 px-2 sm:px-3 py-1.5 sm:py-2 retro-pagination-button transition-all disabled:opacity-30 disabled:cursor-not-allowed ${darkMode ? 'text-white border-gray-600 bg-gray-800 hover:bg-white hover:text-black' : 'text-black border-black bg-white hover:bg-black hover:text-white'}`}
-                        aria-label="Next page"
-                      >
-                        <span className="hidden sm:inline mr-1">NEXT</span>
-                        <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      </Button>
-                    </div>
-
-                    <div className={`mt-3 sm:mt-4 text-center text-xs font-mono border-2 py-1.5 sm:py-2 retro-pagination-info ${darkMode ? 'text-white border-gray-600 bg-gray-800' : 'text-black border-black bg-gray-50'}`}>
-                      <span className="hidden sm:inline">[ PAGE {currentPage} OF {totalPages} ] • [ {filteredNews.length} ARTICLES ]</span>
-                      <span className="sm:hidden">{currentPage}/{totalPages} • {filteredNews.length}</span>
-                    </div>
-                  </nav>
-                )}
-              </>
+                    )
+                  })}
+              </div>
             )}
           </div>
         </main>
 
         {/* Footer */}
         <footer className={`fixed bottom-0 left-0 right-0 z-30 border-t-4 ${darkMode ? 'bg-gray-900 border-gray-600' : 'bg-white border-black'}`}>
-          <div className="max-w-3xl mx-auto px-3 sm:px-4 py-2 sm:py-3">
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-4">
               {/* Left - Developer Credits */}
               <div className={`flex items-center gap-2 sm:gap-4 text-xs font-mono ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -1119,7 +1390,10 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
               {/* Header - Retro */}
               <div className={`sticky top-0 border-b-4 border-double py-4 mb-8 flex items-center justify-between retro-drawer-header ${darkMode ? 'bg-gray-900 border-gray-600' : 'bg-white border-black'}`}>
                 <div className="flex-1 min-w-0 mr-4 retro-meta-info">
-                  <span className={`text-xs font-bold font-mono uppercase tracking-widest block mb-1 retro-category ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <span
+                    className="text-xs font-bold font-mono uppercase tracking-widest block mb-1 retro-category"
+                    style={{ color: feedPreferences ? getFeedColor(selectedNews.source, selectedNews.category, feedPreferences) : (darkMode ? '#9ca3af' : '#6b7280') }}
+                  >
                     [{selectedNews.category}]
                   </span>
                   <div className={`text-xs font-mono retro-source-date ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>
@@ -1362,15 +1636,6 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
           text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
         }
 
-        .retro-mobile-filter {
-          box-shadow: 3px 3px 0 #000;
-        }
-
-        .retro-mobile-filter:hover {
-          box-shadow: 1px 1px 0 #000;
-          transform: translate(2px, 2px);
-        }
-
         .retro-header-button {
           box-shadow: 3px 3px 0 #000;
           transition: all 0.1s;
@@ -1384,115 +1649,6 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
         .retro-header-button:active {
           box-shadow: none;
           transform: translate(3px, 3px);
-        }
-
-        .retro-search-box {
-          box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
-        }
-
-        .retro-input {
-          box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .retro-input:focus {
-          box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1), 0 0 0 4px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Retro News List */
-        .retro-news-list {
-          font-family: 'Courier New', Courier, monospace;
-        }
-
-        .retro-news-item {
-          box-shadow: 0 2px 0 rgba(0, 0, 0, 0.1);
-          transition: all 0.2s;
-        }
-
-        .retro-news-item:hover {
-          box-shadow: 4px 4px 0 #000;
-          transform: translate(-2px, -2px);
-        }
-
-        .retro-meta {
-          border-bottom: 1px dotted rgba(0, 0, 0, 0.2);
-          padding-bottom: 4px;
-        }
-
-        .retro-category {
-          background: rgba(0, 0, 0, 0.05);
-          padding: 2px 6px;
-        }
-
-        .retro-title {
-          font-family: 'Courier New', Courier, monospace;
-          text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.1);
-        }
-
-        .retro-description {
-          font-family: 'Courier New', Courier, monospace;
-        }
-
-        .retro-source {
-          background: rgba(0, 0, 0, 0.03);
-          padding: 2px 6px;
-          display: inline-block;
-        }
-
-        /* Retro Skeleton */
-        .retro-skeleton-item {
-          font-family: 'Courier New', Courier, monospace;
-        }
-
-        .retro-skeleton {
-          background: linear-gradient(90deg, rgba(0, 0, 0, 0.05) 25%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.05) 75%);
-          background-size: 200% 100%;
-          animation: loading-bar 1.5s ease-in-out infinite;
-        }
-
-        .retro-skeleton-bar {
-          border-radius: 2px;
-        }
-
-        /* Retro Pagination */
-        .retro-pagination {
-          font-family: 'Courier New', Courier, monospace;
-        }
-
-        .retro-pagination-button {
-          box-shadow: 3px 3px 0 #000;
-          transition: all 0.1s;
-        }
-
-        .retro-pagination-button:hover:not(:disabled) {
-          box-shadow: 1px 1px 0 #000;
-          transform: translate(2px, 2px);
-        }
-
-        .retro-pagination-button:active:not(:disabled) {
-          box-shadow: none;
-          transform: translate(3px, 3px);
-        }
-
-        .retro-page-numbers {
-          font-family: 'Courier New', Courier, monospace;
-        }
-
-        .retro-page-number {
-          box-shadow: 2px 2px 0 #000;
-          transition: all 0.1s;
-        }
-
-        .retro-page-number:hover {
-          box-shadow: 1px 1px 0 #000;
-          transform: translate(1px, 1px);
-        }
-
-        .retro-ellipsis {
-          background: rgba(0, 0, 0, 0.05);
-        }
-
-        .retro-pagination-info {
-          box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
         }
 
         /* Retro Drawer */
@@ -1591,15 +1747,6 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
           box-shadow: 4px 4px 0 #000;
         }
 
-        /* Retro Empty State */
-        .retro-empty-state {
-          font-family: 'Courier New', Courier, monospace;
-        }
-
-        .retro-empty-box {
-          box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.2);
-        }
-
         /* Retro Initial Loading */
         .retro-initial-loading {
           font-family: 'Courier New', Courier, monospace;
@@ -1655,6 +1802,28 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
           overflow: hidden;
         }
       `}</style>
+
+      {/* Feed Settings Panel */}
+      <FeedSettingsPanel
+        open={showFeedSettings}
+        onOpenChange={setShowFeedSettings}
+        onPreferencesChange={() => {
+          // Reload preferences and fetch news
+          getFeedPreferences().then(setFeedPreferences)
+          fetchAllNews(false)
+        }}
+      />
+
+      {/* Column Settings Panel */}
+      <ColumnSettingsPanel
+        open={showColumnSettings}
+        onOpenChange={setShowColumnSettings}
+        onLayoutChange={async () => {
+          // Reload layout
+          const layout = await getActiveLayout()
+          setActiveLayout(layout)
+        }}
+      />
     </div>
   )
 }
