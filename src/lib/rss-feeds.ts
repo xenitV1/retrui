@@ -277,6 +277,41 @@ const OPINION_ANALYSIS: RssFeed[] = [
 ]
 
 // ============================================================================
+// INTERNATIONAL LANGUAGES (New: de, fr, es, zh, hi)
+// Verified working feeds - tested 2025-12-23
+// ============================================================================
+
+const INTERNATIONAL_LANGUAGES: RssFeed[] = [
+  // German (de) - 4 verified feeds
+  { name: 'Tagesschau', url: 'https://www.tagesschau.de/xml/rss2/', category: 'News', subcategory: 'General', region: 'DE', language: 'de' },
+  { name: 'Spiegel', url: 'https://www.spiegel.de/international/index.rss', category: 'News', subcategory: 'General', region: 'DE', language: 'de' },
+  { name: 'Zeit Online', url: 'https://newsfeed.zeit.de/index', category: 'News', subcategory: 'General', region: 'DE', language: 'de' },
+  { name: 'Heise Online', url: 'https://www.heise.de/rss/heise.rdf', category: 'Technology', subcategory: 'General', region: 'DE', language: 'de' },
+
+  // French (fr) - 4 verified feeds
+  { name: 'Le Monde', url: 'https://www.lemonde.fr/rss/une.xml', category: 'News', subcategory: 'General', region: 'FR', language: 'fr' },
+  { name: 'Le Figaro', url: 'https://www.lefigaro.fr/rss/figaro_flash.xml', category: 'News', subcategory: 'Breaking', region: 'FR', language: 'fr' },
+  { name: 'France Info', url: 'https://www.francetvinfo.fr/titres.rss', category: 'News', subcategory: 'General', region: 'FR', language: 'fr' },
+  { name: '20 Minutes FR', url: 'https://www.20minutes.fr/feeds/rss-une.xml', category: 'News', subcategory: 'General', region: 'FR', language: 'fr' },
+
+  // Spanish (es) - 4 verified feeds
+  { name: 'El Pais', url: 'https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada', category: 'News', subcategory: 'General', region: 'ES', language: 'es' },
+  { name: 'El Mundo', url: 'https://e00-elmundo.uecdn.es/elmundo/rss/portada.xml', category: 'News', subcategory: 'General', region: 'ES', language: 'es' },
+  { name: 'ABC Spain', url: 'https://www.abc.es/rss/2.0/portada/', category: 'News', subcategory: 'General', region: 'ES', language: 'es' },
+  { name: '20 Minutos ES', url: 'https://www.20minutos.es/rss/', category: 'News', subcategory: 'General', region: 'ES', language: 'es' },
+
+  // Chinese (zh) - 4 verified feeds
+  { name: 'BBC Chinese', url: 'http://www.bbc.co.uk/zhongwen/simp/index.xml', category: 'News', subcategory: 'World', region: 'CN', language: 'zh' },
+  { name: 'China News Scroll', url: 'https://www.chinanews.com.cn/rss/scroll-news.xml', category: 'News', subcategory: 'Breaking', region: 'CN', language: 'zh' },
+  { name: 'China News Headlines', url: 'https://www.chinanews.com.cn/rss/importnews.xml', category: 'News', subcategory: 'Headlines', region: 'CN', language: 'zh' },
+  { name: 'Sina News', url: 'http://rss.sina.com.cn/news/marquee/ddt.xml', category: 'News', subcategory: 'General', region: 'CN', language: 'zh' },
+
+  // Hindi (hi) - 2 verified feeds
+  { name: 'BBC Hindi', url: 'https://feeds.bbci.co.uk/hindi/rss.xml', category: 'News', subcategory: 'General', region: 'IN', language: 'hi' },
+  { name: 'Dainik Bhaskar Tech', url: 'https://www.bhaskar.com/rss-v1--category-1740.xml', category: 'Technology', subcategory: 'General', region: 'IN', language: 'hi' },
+]
+
+// ============================================================================
 // COMPLETE FEED CATALOG
 // ============================================================================
 
@@ -289,6 +324,7 @@ export const RSS_FEEDS: RssFeed[] = [
   ...ENTERTAINMENT_ARTS,
   ...LIFESTYLE,
   ...OPINION_ANALYSIS,
+  ...INTERNATIONAL_LANGUAGES,
 ]
 
 // ============================================================================

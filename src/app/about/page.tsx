@@ -176,8 +176,32 @@ export default function AboutPage() {
                                     </div>
                                 </div>
 
+                                {/* International Languages */}
+                                <div className="bg-blue-50 p-4 border-2 border-blue-500">
+                                    <p className="font-bold mb-2">🌍 INTERNATIONAL LANGUAGES (18 feeds)</p>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 text-xs">
+                                        <span>🇩🇪 Tagesschau</span>
+                                        <span>🇩🇪 Spiegel</span>
+                                        <span>🇩🇪 Zeit Online</span>
+                                        <span>🇩🇪 Heise</span>
+                                        <span>🇫🇷 Le Monde</span>
+                                        <span>🇫🇷 Le Figaro</span>
+                                        <span>🇫🇷 France Info</span>
+                                        <span>🇫🇷 20 Minutes</span>
+                                        <span>🇪🇸 El País</span>
+                                        <span>🇪🇸 El Mundo</span>
+                                        <span>🇪🇸 ABC Spain</span>
+                                        <span>🇪🇸 20 Minutos</span>
+                                        <span>🇨🇳 BBC Chinese</span>
+                                        <span>🇨🇳 China News</span>
+                                        <span>🇨🇳 Sina News</span>
+                                        <span>🇮🇳 BBC Hindi</span>
+                                        <span>🇮🇳 Dainik Bhaskar</span>
+                                    </div>
+                                </div>
+
                                 <p className="text-xs text-gray-600 italic mt-4">
-                                    * Total of 175+ RSS feeds across 8 categories, supporting both English and Turkish sources.
+                                    * Total of 190+ RSS feeds across 8 categories and 7 languages (English, Turkish, German, French, Spanish, Chinese, Hindi).
                                 </p>
 
                                 <p>

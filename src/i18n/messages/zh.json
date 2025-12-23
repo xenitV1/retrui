@@ -1,0 +1,54 @@
+{
+    "meta": {
+        "title": "Retrui - 最新科技新闻",
+        "description": "获取来自TechCrunch、The Verge、Wired等顶级来源的最新科技新闻。实时新闻聚合。",
+        "keywords": "科技新闻, 技术, 新闻, 人工智能, 创业公司"
+    },
+    "common": {
+        "loading": "加载中...",
+        "refresh": "刷新",
+        "search": "搜索",
+        "about": "关于",
+        "settings": "设置",
+        "language": "语言",
+        "darkMode": "深色模式",
+        "lightMode": "浅色模式"
+    },
+    "news": {
+        "articles": "篇文章",
+        "noNews": "暂无新闻",
+        "source": "来源",
+        "readMore": "阅读更多",
+        "openOriginal": "打开原文"
+    },
+    "categories": {
+        "all": "全部",
+        "news": "新闻",
+        "business": "商业",
+        "technology": "科技",
+        "science": "科学",
+        "sports": "体育",
+        "entertainment": "娱乐",
+        "lifestyle": "生活",
+        "opinion": "观点"
+    },
+    "sidebar": {
+        "system": "系统",
+        "category": "类别",
+        "language": "语言",
+        "selected": "已选",
+        "allLanguages": "所有语言",
+        "default": "默认",
+        "custom": "自定义",
+        "loading": "加载",
+        "myFeeds": "我的订阅",
+        "updated": "更新",
+        "addFeed": "添加订阅",
+        "feedSettings": "订阅设置",
+        "columnLayout": "列布局"
+    },
+    "footer": {
+        "developedBy": "开发者",
+        "copyright": "© 2025 RETRUI"
+    }
+}

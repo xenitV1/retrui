@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { Search, Clock, X, RefreshCw, ChevronLeft, ChevronRight, Filter, ExternalLink, ArrowRight, Trash2, ChevronDown, Twitter, Github, Info, Plus, Settings, LayoutTemplate } from 'lucide-react'
+import { Search, Clock, X, RefreshCw, ChevronLeft, ChevronRight, Filter, ExternalLink, ArrowRight, Trash2, ChevronDown, Twitter, Github, Info, Plus, Settings, LayoutTemplate, Menu, Globe } from 'lucide-react'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { storage, STORAGE_KEYS } from '@/lib/indexeddb'
@@ -32,6 +33,10 @@ import {
   filterAvailableFeeds,
   isFeedAvailable
 } from '@/lib/feed-health'
+import { LanguageSwitcher } from '@/components/language-switcher'
+import { type Locale } from '@/i18n/config'
+import { useTranslations } from '@/i18n/use-translations'
+
 
 interface NewsItem {
   id: string
@@ -83,6 +88,7 @@ interface RSSFeed {
 
 interface NewsClientProps {
   initialNews: NewsItem[]
+  currentLocale: Locale
 }
 
 function generateId(): string {
@@ -177,17 +183,29 @@ async function fetchRSSFeed(feed: { name: string; url: string; category: string 
 
     const feedData = result.data as RSSFeed
 
-    const news = (feedData.items || []).slice(0, 15).map((item) => ({
-      id: generateId(),
-      title: item.title || 'Untitled',
-      description: cleanDescription(item.contentSnippet || item.content || ''),
-      content: cleanDescription(item.content || item.contentSnippet || ''),
-      author: (item.creator || item.author || feed.name) as string,
-      publishedAt: item.pubDate || new Date().toISOString(),
-      source: feed.name,
-      category: feed.category,
-      url: item.link || '#'
-    }))
+    // 24-hour filter: Only include news from the last 24 hours
+    const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000)
+
+    const news = (feedData.items || [])
+      .slice(0, 15)
+      .map((item) => ({
+        id: generateId(),
+        title: item.title || 'Untitled',
+        description: cleanDescription(item.contentSnippet || item.content || ''),
+        content: cleanDescription(item.content || item.contentSnippet || ''),
+        author: (item.creator || item.author || feed.name) as string,
+        publishedAt: item.pubDate || new Date().toISOString(),
+        source: feed.name,
+        category: feed.category,
+        url: item.link || '#'
+      }))
+      // Filter: only news from last 24 hours
+      .filter(item => {
+        const publishedTime = new Date(item.publishedAt).getTime()
+        // If date parsing fails, include the item (fallback)
+        if (isNaN(publishedTime)) return true
+        return publishedTime >= twentyFourHoursAgo
+      })
 
     // Cache the results
     await storage.set(cacheKey, { data: news, timestamp: Date.now() })
@@ -214,30 +232,54 @@ async function fetchRSSFeed(feed: { name: string; url: string; category: string 
 async function fetchDefaultNewsIncremental(
   feedPreferences: FeedPreferences | undefined,
   onUpdate: (items: NewsItem[]) => void,
-  onProgress?: () => void
+  onProgress?: () => void,
+  language?: string
 ): Promise<void> {
+  console.log('  📡 [fetchDefaultNewsIncremental] ÇAĞRILDI, language:', language)
+
   try {
-    const cacheKey = feedPreferences ? `default_news_cache_${JSON.stringify(feedPreferences)}` : 'default_news_cache'
+    // Cache key depends ONLY on RSS language filter (not UI locale)
+    // This allows sidebar language changes to fetch new content
+    const cacheKey = feedPreferences
+      ? `default_news_cache_${JSON.stringify(feedPreferences)}_${language || 'all'}`
+      : `default_news_cache_${language || 'all'}`
+    console.log('  🔑 [Cache Key] Calculated key:', cacheKey)
+    console.log('  🔑 [Cache Key] feedPreferences:', feedPreferences ? 'SET' : 'UNDEFINED')
+    console.log('  🔑 [Cache Key] language param:', language || 'all')
     const cached = await storage.get<{ data: NewsItem[], timestamp: number }>(cacheKey)
 
     if (cached && Date.now() - cached.timestamp < 2 * 60 * 1000) { // 2 minutes cache
+      console.log('     └─ Cache hit! Using cached data')
       onUpdate(cached.data)
       return
     }
+    console.log('     └─ Cache miss, fetching from RSS...')
 
     // Filter feeds based on user preferences
-    const feedsToFetch = feedPreferences
+    let feedsToFetch = feedPreferences
       ? filterEnabledFeeds(RSS_FEEDS, feedPreferences)
       : RSS_FEEDS
 
+    console.log('     └─ FeedPreferences sonrası feedsToFetch:', feedsToFetch.length)
+
+    // Filter by language if specified
+    if (language && language !== 'All') {
+      const beforeFilter = feedsToFetch.length
+      feedsToFetch = feedsToFetch.filter(feed => feed.language === language)
+      console.log('     └─ Language filtre applied:', language, `(${beforeFilter} → ${feedsToFetch.length})`)
+    }
+
     // Filter out disabled feeds using circuit breaker
     const { available } = await filterAvailableFeeds(feedsToFetch)
+
+    console.log('     └─ Circuit breaker sonrası available:', available.length)
 
     const allNews: NewsItem[] = []
 
     // Fetch feeds in batches to reduce server load
     for (let i = 0; i < available.length; i += BATCH_SIZE) {
       const batch = available.slice(i, i + BATCH_SIZE)
+      console.log(`     └─ Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${batch.length} feeds`)
 
       // Fetch all feeds in this batch in parallel
       const batchResults = await Promise.all(
@@ -270,8 +312,11 @@ async function fetchDefaultNewsIncremental(
       }
     }
 
+    console.log('     └─ Toplam news items fetched:', allNews.length)
+
     // Cache the final results
     await storage.set(cacheKey, { data: allNews.slice(0, 100), timestamp: Date.now() })
+    console.log('     └─ Cached with key:', cacheKey)
   } catch (error) {
     // Development mode logging only
     if (process.env.NODE_ENV === 'development') {
@@ -420,7 +465,10 @@ async function fetchCustomNews(customFeeds: CustomFeed[]): Promise<NewsItem[]> {
   }
 }
 
-export default function NewsClient({ initialNews }: NewsClientProps) {
+export default function NewsClient({ initialNews, currentLocale }: NewsClientProps) {
+  // Get translations for current locale
+  const { t } = useTranslations(currentLocale)
+
   // Mobile detection for responsive layout
   const isMobile = useIsMobile()
 
@@ -436,7 +484,19 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
   const [defaultSearch, setDefaultSearch] = useState('')
   const [defaultCategory, setDefaultCategory] = useState('All')
   const [defaultCurrentPage, setDefaultCurrentPage] = useState(1)
-  const [defaultLanguage, setDefaultLanguage] = useState('All')
+  const [defaultLanguage, setDefaultLanguage] = useState<string>(currentLocale)
+
+  // Wrapper for setDefaultLanguage with console logging
+  const handleLanguageChange = (newLanguage: string) => {
+    console.log('📰 [Sol Menü Language] Dil değişikliği ÇAĞRILDI')
+    console.log('  └─ Eski dil:', defaultLanguage)
+    console.log('  └─ Yeni dil:', newLanguage)
+    console.log('  └─ RSS feed filtreleme yapılacak ve yeniden yüklenecek')
+
+    setDefaultLanguage(newLanguage)
+
+    console.log('  └─ State güncellendi, fetchAllNews tetiklenmeli (defaultLanguage dependency)')
+  }
 
   // RIGHT COLUMN (Custom Feeds)
   const [customNews, setCustomNews] = useState<NewsItem[]>([])
@@ -467,23 +527,57 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
   const [feedPreferences, setFeedPreferences] = useState<FeedPreferences | null>(null)
   // Track whether feed preferences have been loaded to prevent infinite loop
   const feedPreferencesLoadedRef = useRef(false)
+  // Race condition prevention: track current fetch operation ID
+  const fetchIdRef = useRef(0)
   const [showFeedSettings, setShowFeedSettings] = useState(false)
   const [showColumnSettings, setShowColumnSettings] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
+
+  // Content language filter for RSS feeds
+  const [contentLanguage, setContentLanguage] = useState<string>('all')
+
+  // NOTE: RSS feed language (defaultLanguage) is INDEPENDENT from UI locale (currentLocale)
+  // User can change RSS language from sidebar menu without affecting UI language
+  // Initial value is set from currentLocale in useState above, but subsequent changes are user-driven
 
   // Fetch all news with useCallback - incremental updates
   const fetchAllNews = useCallback(async (showLoading = true) => {
+    // Increment fetch ID to cancel previous pending fetches (race condition prevention)
+    const currentFetchId = ++fetchIdRef.current
+    console.log('🔄 [fetchAllNews] ÇAĞRILDI (fetchId:', currentFetchId, ')')
+    console.log('  └─ showLoading:', showLoading)
+    console.log('  └─ defaultLanguage:', defaultLanguage)
+    console.log('  └─ customFeeds count:', customFeeds.length)
+
     try {
       if (showLoading) setLoading(true)
       else setIsRefreshing(true)
 
-      // Calculate total feeds to fetch (after filtering disabled feeds)
-      const defaultFeedsToFetch = feedPreferences
+      // Calculate total feeds to fetch (after filtering disabled feeds and language)
+      let defaultFeedsToFetch = feedPreferences
         ? filterEnabledFeeds(RSS_FEEDS, feedPreferences)
         : RSS_FEEDS
+
+      console.log('  └─ Toplam RSS_FEEDS:', RSS_FEEDS.length)
+      console.log('  └─ FeedPreferences sonrası:', defaultFeedsToFetch.length)
+
+      // Filter by language if specified
+      if (defaultLanguage !== 'All') {
+        const beforeFilter = defaultFeedsToFetch.length
+        defaultFeedsToFetch = defaultFeedsToFetch.filter(feed => feed.language === defaultLanguage)
+        console.log('  └─ Language filtre applied:', defaultLanguage)
+        console.log('     └─ Öncesi:', beforeFilter, '→ Sonrası:', defaultFeedsToFetch.length)
+      } else {
+        console.log('  └─ Language filtre: All (filtre yok)')
+      }
 
       // Filter available feeds to get accurate count
       const { available: availableDefault } = await filterAvailableFeeds(defaultFeedsToFetch)
       const { available: availableCustom } = await filterAvailableFeeds(customFeeds)
+
+      console.log('  └─ Circuit breaker sonrası:')
+      console.log('     └─ Default feeds:', availableDefault.length)
+      console.log('     └─ Custom feeds:', availableCustom.length)
 
       const totalFeeds = availableDefault.length + availableCustom.length
 
@@ -496,6 +590,8 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
       setCustomNews([])
       setFilteredCustomNews([])
 
+      console.log('  └─ Fetch başlıyor...')
+
       // Create a counter callback for progress updates
       let loadedCount = 0
       const updateProgress = () => {
@@ -506,16 +602,28 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
       // Fetch default and custom news incrementally in parallel
       await Promise.all([
         fetchDefaultNewsIncremental(feedPreferences || undefined, (items) => {
+          // Only update if this is still the current fetch (race condition check)
+          if (fetchIdRef.current !== currentFetchId) {
+            console.log('  ⚠️ [fetchId:', currentFetchId, '] Stale fetch, ignoring results')
+            return
+          }
           setDefaultNews(items)
           setFilteredDefaultNews(items)
-        }, updateProgress),
+          console.log('  └─ [fetchId:', currentFetchId, '] Default news güncellendi, items count:', items.length)
+        }, updateProgress, defaultLanguage),
         fetchCustomNewsIncremental(customFeeds, (items) => {
+          // Only update if this is still the current fetch (race condition check)
+          if (fetchIdRef.current !== currentFetchId) {
+            return
+          }
           setCustomNews(items)
           setFilteredCustomNews(items)
+          console.log('  └─ [fetchId:', currentFetchId, '] Custom news güncellendi, items count:', items.length)
         }, updateProgress)
       ])
 
       setLastUpdate(new Date())
+      console.log('✅ [fetchAllNews] TAMAMLANDI')
     } catch (error) {
       // Development mode logging only
       if (process.env.NODE_ENV === 'development') {
@@ -525,7 +633,7 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
       setLoading(false)
       setIsRefreshing(false)
     }
-  }, [customFeeds, feedPreferences])
+  }, [customFeeds, feedPreferences, defaultLanguage])
 
   // Load custom feeds from IndexedDB on mount
   useEffect(() => {
@@ -587,7 +695,16 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
     const fetchColumnNews = async () => {
       if (!activeLayout || !feedPreferences) return
 
-      const feedsToFetch = filterEnabledFeeds(RSS_FEEDS, feedPreferences)
+      // Check if any column has a language filter - if so, skip defaultLanguage filter
+      const hasLanguageFilterColumn = activeLayout.columns.some(col => col.filter.type === 'language')
+
+      // Use defaultLanguage from sidebar for language filtering
+      let feedsToFetch = filterEnabledFeeds(RSS_FEEDS, feedPreferences)
+
+      // Apply language filter from sidebar (defaultLanguage) unless column has its own language filter
+      if (!hasLanguageFilterColumn && defaultLanguage !== 'All') {
+        feedsToFetch = feedsToFetch.filter(feed => feed.language === defaultLanguage)
+      }
 
       for (const column of activeLayout.columns) {
         const columnFeeds = getFeedsForColumn(feedsToFetch, customFeeds, column)
@@ -636,7 +753,22 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
     }
 
     fetchColumnNews()
-  }, [activeLayout, customFeeds, feedPreferences])
+  }, [activeLayout, customFeeds, feedPreferences, defaultLanguage])
+
+  // Track if initial fetch has completed to avoid double fetch on mount
+  const initialFetchDoneRef = useRef(false)
+
+  // Fetch news when defaultLanguage changes (user selects language from sidebar)
+  // This ensures RSS feed filter works correctly
+  useEffect(() => {
+    // Skip on initial mount - let the mount useEffect handle first fetch
+    if (!initialFetchDoneRef.current) {
+      return
+    }
+
+    console.log('📰 [Language Change] defaultLanguage değişti, fetch tetikleniyor:', defaultLanguage)
+    fetchAllNews(false) // Use false to avoid full loading indicator
+  }, [defaultLanguage, fetchAllNews])
 
   // Initialize with initialNews prop from server-side rendering
   useEffect(() => {
@@ -656,6 +788,9 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
 
     // Always fetch fresh data from API
     fetchAllNews(true)
+
+    // Mark initial fetch as complete
+    initialFetchDoneRef.current = true
   }, [])
 
   // Effect to sync drawer loading with selected news content
@@ -698,6 +833,8 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
   }, [darkMode])
 
   // Filter DEFAULT news (Left Column)
+  // NOTE: Language filtering is already done in fetchAllNews, so we don't filter by language here
+  // This useEffect only handles category and search filtering on the already language-filtered data
   useEffect(() => {
     let filtered = defaultNews
 
@@ -706,13 +843,8 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
       filtered = filtered.filter(item => item.category === defaultCategory)
     }
 
-    // Filter by language
-    if (defaultLanguage !== 'All') {
-      filtered = filtered.filter(item => {
-        const feed = RSS_FEEDS.find(f => f.name === item.source)
-        return feed && feed.language === defaultLanguage
-      })
-    }
+    // NOTE: Language filtering removed - it's handled in fetchAllNews
+    // The news items are already filtered by language when fetched
 
     // Filter by search
     if (defaultSearch.trim()) {
@@ -727,7 +859,7 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
 
     setFilteredDefaultNews(filtered)
     setDefaultCurrentPage(1)
-  }, [defaultSearch, defaultCategory, defaultLanguage, defaultNews])
+  }, [defaultSearch, defaultCategory, defaultNews])
 
   // Filter CUSTOM news (Right Column)
   useEffect(() => {
@@ -1024,7 +1156,7 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
           <div>
             {/* Retro Header */}
             <div className={`mb-4 p-2 border-4 border-double flex items-center justify-center retro-selected-box ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-black bg-black'}`}>
-              <p className={`text-xs font-bold font-mono tracking-widest ${darkMode ? 'text-white' : 'text-white'}`}>SYSTEM</p>
+              <p className={`text-xs font-bold font-mono tracking-widest ${darkMode ? 'text-white' : 'text-white'}`}>{t('sidebar.system')}</p>
             </div>
 
             {/* Category Dropdown - Retro Style */}
@@ -1035,7 +1167,7 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
                     variant="ghost"
                     className={`w-full justify-start text-xs font-bold font-mono uppercase tracking-widest px-3 py-2 border-2 transition-all retro-button ${darkMode ? 'text-white hover:bg-white hover:text-black border-gray-600 bg-gray-800' : 'text-black hover:bg-black hover:text-white border-black bg-white'}`}
                   >
-                    <span>[ CATEGORY ]</span>
+                    <span>[ {t('sidebar.category')} ]</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className={`w-48 retro-dropdown ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-black bg-white'}`} align="start">
@@ -1060,18 +1192,23 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
                     variant="ghost"
                     className={`w-full justify-start text-xs font-bold font-mono uppercase tracking-widest px-3 py-2 border-2 transition-all retro-button ${darkMode ? 'text-white hover:bg-white hover:text-black border-gray-600 bg-gray-800' : 'text-black hover:bg-black hover:text-white border-black bg-white'}`}
                   >
-                    <span>[ LANGUAGE ]</span>
+                    <span>[ {t('sidebar.language')} ]</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className={`w-48 retro-dropdown ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-black bg-white'}`} align="start">
                   {[
-                    { name: 'All Languages', value: 'All' },
+                    { name: t('sidebar.allLanguages'), value: 'All' },
                     { name: 'English', value: 'en' },
                     { name: 'Türkçe', value: 'tr' },
+                    { name: 'Deutsch', value: 'de' },
+                    { name: 'Français', value: 'fr' },
+                    { name: 'Español', value: 'es' },
+                    { name: '中文', value: 'zh' },
+                    { name: 'हिन्दी', value: 'hi' },
                   ].map(lang => (
                     <DropdownMenuItem
                       key={lang.value}
-                      onClick={() => setDefaultLanguage(lang.value)}
+                      onClick={() => handleLanguageChange(lang.value)}
                       className={`text-xs font-mono ${(defaultLanguage === lang.value) ? (darkMode ? 'bg-white text-gray-900' : 'bg-black text-white') : (darkMode ? 'text-white hover:bg-gray-700' : 'text-black hover:bg-gray-200')}`}
                     >
                       {(defaultLanguage === lang.value) ? '▸ ' : '  '}{lang.name}
@@ -1083,23 +1220,30 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
 
             {/* Current selected category - Retro Style */}
             <div className={`mb-4 p-3 border-4 border-double text-center retro-selected-box ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-black bg-black'}`}>
-              <p className={`text-xs font-mono uppercase tracking-wider mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>[SELECTED]</p>
+              <p className={`text-xs font-mono uppercase tracking-wider mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>[{t('sidebar.selected')}]</p>
               <p className={`text-sm font-bold font-mono tracking-wider ${darkMode ? 'text-white' : 'text-white'}`}>
                 {defaultCategory}
               </p>
               <p className={`text-xs font-mono tracking-wider mt-1 ${defaultLanguage === 'All' ? (darkMode ? 'text-gray-400' : 'text-gray-500') : (darkMode ? 'text-white' : 'text-white')}`}>
-                {defaultLanguage === 'All' ? 'All Languages' : defaultLanguage === 'tr' ? 'Türkçe' : 'English'}
+                {defaultLanguage === 'All' ? t('sidebar.allLanguages') :
+                  defaultLanguage === 'tr' ? 'Türkçe' :
+                    defaultLanguage === 'de' ? 'Deutsch' :
+                      defaultLanguage === 'fr' ? 'Français' :
+                        defaultLanguage === 'es' ? 'Español' :
+                          defaultLanguage === 'zh' ? '中文' :
+                            defaultLanguage === 'hi' ? 'हिन्दी' :
+                              'English'}
               </p>
             </div>
 
             {/* Stats - Retro Style */}
             <div className={`mb-4 p-2 border-2 retro-stats ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-black bg-gray-100'}`}>
               <div className="flex items-center justify-between">
-                <p className={`text-xs font-mono uppercase ${darkMode ? 'text-white' : 'text-black'}`}>Default:</p>
+                <p className={`text-xs font-mono uppercase ${darkMode ? 'text-white' : 'text-black'}`}>{t('sidebar.default')}:</p>
                 <p className={`text-xs font-bold font-mono ${darkMode ? 'text-white' : 'text-black'}`}>{filteredDefaultNews.length}</p>
               </div>
               <div className="flex items-center justify-between mt-1">
-                <p className={`text-xs font-mono uppercase ${darkMode ? 'text-white' : 'text-black'}`}>Custom:</p>
+                <p className={`text-xs font-mono uppercase ${darkMode ? 'text-white' : 'text-black'}`}>{t('sidebar.custom')}:</p>
                 <p className={`text-xs font-bold font-mono ${darkMode ? 'text-white' : 'text-black'}`}>{filteredCustomNews.length}</p>
               </div>
 
@@ -1107,7 +1251,7 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
               {loading && loadingFeedsCount.total > 0 && (
                 <div className="mt-2 pt-2 border-t-2" style={{ borderColor: darkMode ? '#4b5563' : '#000' }}>
                   <div className="flex items-center justify-between mb-1">
-                    <p className={`text-xs font-mono uppercase ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loading:</p>
+                    <p className={`text-xs font-mono uppercase ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t('sidebar.loading')}:</p>
                     <p className={`text-xs font-bold font-mono ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
                       {loadingFeedsCount.loaded}/{loadingFeedsCount.total}
                     </p>
@@ -1130,7 +1274,7 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
                   className={`w-full mb-2 text-xs font-bold font-mono uppercase border-2 px-3 py-2 transition-all ${darkMode ? 'text-white hover:bg-white hover:text-black border-gray-600 bg-gray-800' : 'text-black hover:bg-black hover:text-white border-black bg-white'}`}
                 >
                   <Plus className="w-3 h-3 mr-1" />
-                  ADD FEED
+                  {t('sidebar.addFeed')}
                 </Button>
               </DialogTrigger>
               <DialogContent className={`${darkMode ? 'bg-gray-900 border-gray-600 text-white' : 'bg-white border-black text-black'} border-4`}>
@@ -1198,7 +1342,7 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
               className={`w-full mb-2 text-xs font-bold font-mono uppercase border-2 px-3 py-2 transition-all ${darkMode ? 'text-white hover:bg-white hover:text-black border-gray-600 bg-gray-800' : 'text-black hover:bg-black hover:text-white border-black bg-white'}`}
             >
               <Settings className="w-3 h-3 mr-1" />
-              FEED SETTINGS
+              {t('sidebar.feedSettings')}
             </Button>
 
             {/* Column Layout Button */}
@@ -1208,13 +1352,13 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
               className={`w-full mb-4 text-xs font-bold font-mono uppercase border-2 px-3 py-2 transition-all ${darkMode ? 'text-white hover:bg-white hover:text-black border-gray-600 bg-gray-800' : 'text-black hover:bg-black hover:text-white border-black bg-white'}`}
             >
               <LayoutTemplate className="w-3 h-3 mr-1" />
-              COLUMN LAYOUT
+              {t('sidebar.columnLayout')}
             </Button>
 
             {/* Custom Feeds List */}
             {customFeeds.length > 0 && (
               <div className={`mb-4 p-2 border-2 ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-black bg-gray-100'}`}>
-                <p className={`text-xs font-mono uppercase mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>MY FEEDS:</p>
+                <p className={`text-xs font-mono uppercase mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{t('sidebar.myFeeds')}:</p>
                 <div className="space-y-1">
                   {customFeeds.map(feed => (
                     <div key={feed.url} className="flex items-center justify-between group">
@@ -1236,7 +1380,7 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
           </div>
 
           <div className={`text-xs font-mono text-center retro-footer p-2 border-2 border-t-0 ${darkMode ? 'text-white border-gray-600' : 'text-black border-black'}`}>
-            <p>UPDATED</p>
+            <p>{t('sidebar.updated')}</p>
             <p className="font-bold">{formatTimeSinceLastUpdate()}</p>
           </div>
         </div>
@@ -1249,6 +1393,112 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between gap-2 sm:gap-4">
               <div className="flex items-center gap-2 sm:gap-3">
+                {/* Mobile Hamburger Menu */}
+                {isMobile && (
+                  <Sheet open={showMobileMenu} onOpenChange={setShowMobileMenu}>
+                    <SheetTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`border-2 p-2 ${darkMode ? 'text-white border-gray-600 hover:bg-gray-700' : 'text-black border-black hover:bg-gray-100'}`}
+                      >
+                        <Menu className="w-5 h-5" />
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className={`w-[280px] ${darkMode ? 'bg-gray-900 border-gray-600' : 'bg-white border-black'}`}>
+                      <SheetHeader>
+                        <SheetTitle className={`text-left font-mono font-bold ${darkMode ? 'text-white' : 'text-black'}`}>
+                          [MENU]
+                        </SheetTitle>
+                      </SheetHeader>
+                      <div className="mt-6 space-y-4">
+                        {/* Feed Settings */}
+                        <Button
+                          variant="ghost"
+                          onClick={() => { setShowMobileMenu(false); setShowFeedSettings(true) }}
+                          className={`w-full justify-start font-mono text-sm border-2 ${darkMode ? 'text-white border-gray-600 hover:bg-gray-700' : 'text-black border-black hover:bg-gray-100'}`}
+                        >
+                          <Settings className="w-4 h-4 mr-2" />
+                          FEED SETTINGS
+                        </Button>
+                        {/* Layout Settings */}
+                        <Button
+                          variant="ghost"
+                          onClick={() => { setShowMobileMenu(false); setShowColumnSettings(true) }}
+                          className={`w-full justify-start font-mono text-sm border-2 ${darkMode ? 'text-white border-gray-600 hover:bg-gray-700' : 'text-black border-black hover:bg-gray-100'}`}
+                        >
+                          <LayoutTemplate className="w-4 h-4 mr-2" />
+                          LAYOUT SETTINGS
+                        </Button>
+                        {/* Add Feed */}
+                        <Button
+                          variant="ghost"
+                          onClick={() => { setShowMobileMenu(false); setShowAddFeedDialog(true) }}
+                          className={`w-full justify-start font-mono text-sm border-2 ${darkMode ? 'text-white border-gray-600 hover:bg-gray-700' : 'text-black border-black hover:bg-gray-100'}`}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          ADD CUSTOM FEED
+                        </Button>
+                        {/* Content Language Selector */}
+                        <div className={`p-3 border-2 ${darkMode ? 'border-gray-600' : 'border-black'}`}>
+                          <div className={`font-mono text-xs font-bold mb-2 ${darkMode ? 'text-white' : 'text-black'}`}>
+                            <Globe className="w-3 h-3 inline mr-1" /> CONTENT LANGUAGE
+                          </div>
+                          <Select value={contentLanguage} onValueChange={setContentLanguage}>
+                            <SelectTrigger className={`border-2 font-mono text-xs ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-black text-black'}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="font-mono text-xs">
+                              <SelectItem value="all">🌍 All Languages</SelectItem>
+                              <SelectItem value="en">🇬🇧 English</SelectItem>
+                              <SelectItem value="tr">🇹🇷 Türkçe</SelectItem>
+                              <SelectItem value="de">🇩🇪 Deutsch</SelectItem>
+                              <SelectItem value="fr">🇫🇷 Français</SelectItem>
+                              <SelectItem value="es">🇪🇸 Español</SelectItem>
+                              <SelectItem value="zh">🇨🇳 中文</SelectItem>
+                              <SelectItem value="hi">🇮🇳 हिन्दी</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {/* Dark Mode */}
+                        <Button
+                          variant="ghost"
+                          onClick={() => setDarkMode(!darkMode)}
+                          className={`w-full justify-start font-mono text-sm border-2 ${darkMode ? 'text-white border-gray-600 hover:bg-gray-700' : 'text-black border-black hover:bg-gray-100'}`}
+                        >
+                          <span className="mr-2">{darkMode ? '☀' : '☾'}</span>
+                          {darkMode ? 'LIGHT MODE' : 'DARK MODE'}
+                        </Button>
+                        <Link
+                          href="/about"
+                          onClick={() => setShowMobileMenu(false)}
+                          className={`flex items-center w-full font-mono text-sm border-2 px-4 py-2 ${darkMode ? 'text-white border-gray-600 hover:bg-gray-700' : 'text-black border-black hover:bg-gray-100'}`}
+                        >
+                          <Info className="w-4 h-4 mr-2" />
+                          ABOUT
+                        </Link>
+                        {/* UI Language Selection */}
+                        <div className={`p-3 border-2 ${darkMode ? 'border-gray-600' : 'border-black'}`}>
+                          <div className={`font-mono text-xs font-bold mb-2 ${darkMode ? 'text-white' : 'text-black'}`}>
+                            🌐 UI LANGUAGE
+                          </div>
+                          <LanguageSwitcher currentLocale={currentLocale} darkMode={darkMode} />
+                        </div>
+                        {/* Refresh */}
+                        <Button
+                          variant="ghost"
+                          onClick={() => { setShowMobileMenu(false); fetchAllNews(true) }}
+                          disabled={loading || isRefreshing}
+                          className={`w-full justify-start font-mono text-sm border-2 ${darkMode ? 'text-white border-gray-600 hover:bg-gray-700' : 'text-black border-black hover:bg-gray-100'}`}
+                        >
+                          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                          REFRESH NEWS
+                        </Button>
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                )}
+
                 {/* Retro Logo */}
                 <div className="flex items-center gap-2">
                   <div className={`w-8 h-8 sm:w-10 sm:h-10 border-2 sm:border-4 flex items-center justify-center retro-logo ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-black bg-black'}`}>
@@ -1262,6 +1512,11 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
               </div>
 
               <div className="flex items-center gap-1 sm:gap-2">
+                {/* UI Language Switcher - Desktop */}
+                <div className="hidden sm:block">
+                  <LanguageSwitcher currentLocale={currentLocale} darkMode={darkMode} />
+                </div>
+
                 {/* Dark Mode Toggle - Retro */}
                 <Button
                   variant="ghost"
@@ -1331,12 +1586,12 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
               </div>
             )}
 
-            {/* Dynamic Columns - Stacks vertically on mobile, grid on desktop */}
+            {/* Dynamic Columns - Split screen on mobile (50vh each), grid on desktop */}
             {activeLayout && (
               <div
-                className={`gap-4 ${isMobile
-                  ? 'flex flex-col'
-                  : 'grid'
+                className={`gap-0 ${isMobile
+                  ? 'flex flex-col h-[calc(100vh-180px)]'
+                  : 'grid gap-4'
                   }`}
                 style={isMobile ? {} : {
                   gridTemplateColumns: activeLayout.columns.map(c => `${c.width}%`).join(' ')
@@ -1365,8 +1620,9 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
                     return (
                       <div
                         key={column.id}
-                        className={`border-2 ${darkMode ? 'border-gray-600' : 'border-black'} p-3 flex flex-col min-w-0`}
-                        style={{ minWidth: column.collapsed ? '60px' : '300px' }}
+                        className={`border-2 ${darkMode ? 'border-gray-600' : 'border-black'} p-3 flex flex-col min-w-0 ${isMobile ? 'flex-1 min-h-0 overflow-hidden' : ''
+                          }`}
+                        style={isMobile ? {} : { minWidth: column.collapsed ? '60px' : '300px' }}
                       >
                         {/* Column Header */}
                         <div className={`flex items-center justify-between mb-4 pb-2 border-b-2 ${darkMode ? 'border-gray-600' : 'border-black'}`}>
@@ -1410,8 +1666,9 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
                               />
                             </div>
 
-                            {/* News List (paginated) */}
-                            <div className="space-y-1 flex-1">
+                            {/* News List (scrollable on mobile) */}
+                            <div className={`space-y-1 flex-1 ${isMobile ? 'overflow-y-auto min-h-0' : ''
+                              }`}>
                               {filteredNews.length === 0 ? (
                                 <div className="py-12 text-center">
                                   <p className={`text-sm font-mono ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>

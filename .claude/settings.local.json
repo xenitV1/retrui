@@ -18,7 +18,8 @@
       "Bash(npx tsx:*)",
       "Bash(npm run lint:*)",
       "Bash(npx next lint:*)",
-      "Bash(npx:*)"
+      "Bash(npx:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []

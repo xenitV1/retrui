@@ -1,0 +1,54 @@
+{
+    "meta": {
+        "title": "Retrui - ताज़ा तकनीकी समाचार",
+        "description": "TechCrunch, The Verge, Wired जैसे प्रमुख स्रोतों से नवीनतम तकनीकी समाचारों से अपडेट रहें।",
+        "keywords": "तकनीकी समाचार, प्रौद्योगिकी, समाचार, एआई, स्टार्टअप"
+    },
+    "common": {
+        "loading": "लोड हो रहा है...",
+        "refresh": "रिफ्रेश करें",
+        "search": "खोजें",
+        "about": "हमारे बारे में",
+        "settings": "सेटिंग्स",
+        "language": "भाषा",
+        "darkMode": "डार्क मोड",
+        "lightMode": "लाइट मोड"
+    },
+    "news": {
+        "articles": "लेख",
+        "noNews": "कोई समाचार उपलब्ध नहीं",
+        "source": "स्रोत",
+        "readMore": "और पढ़ें",
+        "openOriginal": "मूल खोलें"
+    },
+    "categories": {
+        "all": "सभी",
+        "news": "समाचार",
+        "business": "व्यापार",
+        "technology": "प्रौद्योगिकी",
+        "science": "विज्ञान",
+        "sports": "खेल",
+        "entertainment": "मनोरंजन",
+        "lifestyle": "जीवनशैली",
+        "opinion": "राय"
+    },
+    "sidebar": {
+        "system": "सिस्टम",
+        "category": "श्रेणी",
+        "language": "भाषा",
+        "selected": "चयनित",
+        "allLanguages": "सभी भाषाएं",
+        "default": "डिफ़ॉल्ट",
+        "custom": "कस्टम",
+        "loading": "लोड हो रहा",
+        "myFeeds": "मेरी फ़ीड्स",
+        "updated": "अपडेट किया",
+        "addFeed": "फ़ीड जोड़ें",
+        "feedSettings": "फ़ीड सेटिंग्स",
+        "columnLayout": "कॉलम लेआउट"
+    },
+    "footer": {
+        "developedBy": "द्वारा विकसित",
+        "copyright": "© 2025 RETRUI"
+    }
+}

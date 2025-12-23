@@ -5,6 +5,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { locales, type Locale } from "@/i18n/config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -126,6 +127,22 @@ export default function RootLayout({
       <head>
         {/* Google Search Console Verification */}
         <meta name="google-site-verification" content="J73KSfjPYnB7--hDTg8JbRBrQNWMrA6U9LarX5EqEe4" />
+
+        {/* hreflang tags for all locales */}
+        {locales.map((loc) => (
+          <link
+            key={loc}
+            rel="alternate"
+            hrefLang={loc}
+            href={`https://retrui.vercel.app/${loc}`}
+          />
+        ))}
+        <link
+          rel="alternate"
+          hrefLang="x-default"
+          href="https://retrui.vercel.app/en"
+        />
+
         {/* JSON-LD Structured Data */}
         <script
           type="application/ld+json"

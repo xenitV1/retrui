@@ -106,7 +106,7 @@ export const DEFAULT_LAYOUTS: ColumnLayout[] = [
   },
   {
     id: 'language-split',
-    name: 'Language Split',
+    name: 'Language Split (EN/TR)',
     columns: [
       {
         id: 'col-english',
@@ -122,6 +122,110 @@ export const DEFAULT_LAYOUTS: ColumnLayout[] = [
         filter: { type: 'language', language: 'tr' },
         width: 50,
         order: 1,
+        collapsed: false
+      }
+    ],
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  },
+  {
+    id: 'intl-split-4',
+    name: 'International Split (4)',
+    columns: [
+      {
+        id: 'col-int-en',
+        title: '🇬🇧 English',
+        filter: { type: 'language', language: 'en' },
+        width: 25,
+        order: 0,
+        collapsed: false
+      },
+      {
+        id: 'col-int-tr',
+        title: '🇹🇷 Türkçe',
+        filter: { type: 'language', language: 'tr' },
+        width: 25,
+        order: 1,
+        collapsed: false
+      },
+      {
+        id: 'col-int-de',
+        title: '🇩🇪 Deutsch',
+        filter: { type: 'language', language: 'de' },
+        width: 25,
+        order: 2,
+        collapsed: false
+      },
+      {
+        id: 'col-int-fr',
+        title: '🇫🇷 Français',
+        filter: { type: 'language', language: 'fr' },
+        width: 25,
+        order: 3,
+        collapsed: false
+      }
+    ],
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  },
+  {
+    id: 'multi-language',
+    name: 'Multi-Language (7)',
+    columns: [
+      {
+        id: 'col-en',
+        title: '🇬🇧 English',
+        filter: { type: 'language', language: 'en' },
+        width: 14.28,
+        order: 0,
+        collapsed: false
+      },
+      {
+        id: 'col-tr',
+        title: '🇹🇷 Türkçe',
+        filter: { type: 'language', language: 'tr' },
+        width: 14.28,
+        order: 1,
+        collapsed: false
+      },
+      {
+        id: 'col-de',
+        title: '🇩🇪 Deutsch',
+        filter: { type: 'language', language: 'de' },
+        width: 14.28,
+        order: 2,
+        collapsed: false
+      },
+      {
+        id: 'col-fr',
+        title: '🇫🇷 Français',
+        filter: { type: 'language', language: 'fr' },
+        width: 14.28,
+        order: 3,
+        collapsed: false
+      },
+      {
+        id: 'col-es',
+        title: '🇪🇸 Español',
+        filter: { type: 'language', language: 'es' },
+        width: 14.28,
+        order: 4,
+        collapsed: false
+      },
+      {
+        id: 'col-zh',
+        title: '🇨🇳 中文',
+        filter: { type: 'language', language: 'zh' },
+        width: 14.28,
+        order: 5,
+        collapsed: false
+      },
+      {
+        id: 'col-hi',
+        title: '🇮🇳 हिन्दी',
+        filter: { type: 'language', language: 'hi' },
+        width: 14.32,
+        order: 6,
         collapsed: false
       }
     ],

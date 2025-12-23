@@ -5,12 +5,15 @@
  */
 import { Suspense } from 'react'
 import NewsClient from './news-client'
+import { defaultLocale } from '@/i18n/config'
 
 export default function Home() {
+
   return (
     <Suspense fallback={<LoadingFallback />}>
-      <NewsClient initialNews={[]} />
+      <NewsClient initialNews={[]} currentLocale={defaultLocale} />
     </Suspense>
+
   )
 }
 

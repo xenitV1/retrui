@@ -1,0 +1,54 @@
+{
+    "meta": {
+        "title": "Retrui - Aktuelle Technologie-Nachrichten",
+        "description": "Bleiben Sie mit den neuesten Technologie-Nachrichten von Top-Quellen wie TechCrunch, The Verge, Wired auf dem Laufenden.",
+        "keywords": "technologie nachrichten, tech news, nachrichten, KI, startups"
+    },
+    "common": {
+        "loading": "Laden...",
+        "refresh": "Aktualisieren",
+        "search": "Suchen",
+        "about": "Über",
+        "settings": "Einstellungen",
+        "language": "Sprache",
+        "darkMode": "Dunkelmodus",
+        "lightMode": "Hellmodus"
+    },
+    "news": {
+        "articles": "Artikel",
+        "noNews": "Keine Nachrichten verfügbar",
+        "source": "Quelle",
+        "readMore": "Weiterlesen",
+        "openOriginal": "Original öffnen"
+    },
+    "categories": {
+        "all": "Alle",
+        "news": "Nachrichten",
+        "business": "Wirtschaft",
+        "technology": "Technologie",
+        "science": "Wissenschaft",
+        "sports": "Sport",
+        "entertainment": "Unterhaltung",
+        "lifestyle": "Lifestyle",
+        "opinion": "Meinung"
+    },
+    "sidebar": {
+        "system": "SYSTEM",
+        "category": "KATEGORIE",
+        "language": "SPRACHE",
+        "selected": "AUSGEWÄHLT",
+        "allLanguages": "Alle Sprachen",
+        "default": "Standard",
+        "custom": "Benutzerdefiniert",
+        "loading": "Laden",
+        "myFeeds": "MEINE FEEDS",
+        "updated": "AKTUALISIERT",
+        "addFeed": "FEED HINZUFÜGEN",
+        "feedSettings": "FEED-EINSTELLUNGEN",
+        "columnLayout": "SPALTEN-LAYOUT"
+    },
+    "footer": {
+        "developedBy": "Entwickelt von",
+        "copyright": "© 2025 RETRUI"
+    }
+}

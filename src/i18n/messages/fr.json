@@ -1,0 +1,54 @@
+{
+    "meta": {
+        "title": "Retrui - Dernières Actualités Technologiques",
+        "description": "Restez informé des dernières actualités technologiques de sources de premier plan comme TechCrunch, The Verge, Wired.",
+        "keywords": "actualités tech, technologie, nouvelles, IA, startups"
+    },
+    "common": {
+        "loading": "Chargement...",
+        "refresh": "Actualiser",
+        "search": "Rechercher",
+        "about": "À propos",
+        "settings": "Paramètres",
+        "language": "Langue",
+        "darkMode": "Mode sombre",
+        "lightMode": "Mode clair"
+    },
+    "news": {
+        "articles": "articles",
+        "noNews": "Aucune actualité disponible",
+        "source": "Source",
+        "readMore": "Lire la suite",
+        "openOriginal": "Ouvrir l'original"
+    },
+    "categories": {
+        "all": "Tous",
+        "news": "Actualités",
+        "business": "Affaires",
+        "technology": "Technologie",
+        "science": "Science",
+        "sports": "Sports",
+        "entertainment": "Divertissement",
+        "lifestyle": "Style de vie",
+        "opinion": "Opinion"
+    },
+    "sidebar": {
+        "system": "SYSTÈME",
+        "category": "CATÉGORIE",
+        "language": "LANGUE",
+        "selected": "SÉLECTIONNÉ",
+        "allLanguages": "Toutes les langues",
+        "default": "Par défaut",
+        "custom": "Personnalisé",
+        "loading": "Chargement",
+        "myFeeds": "MES FLUX",
+        "updated": "MIS À JOUR",
+        "addFeed": "AJOUTER FLUX",
+        "feedSettings": "PARAMÈTRES FLUX",
+        "columnLayout": "MISE EN PAGE"
+    },
+    "footer": {
+        "developedBy": "Développé par",
+        "copyright": "© 2025 RETRUI"
+    }
+}

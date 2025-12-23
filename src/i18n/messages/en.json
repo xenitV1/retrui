@@ -1,0 +1,54 @@
+{
+    "meta": {
+        "title": "Retrui - Latest Technology News & Updates",
+        "description": "Stay updated with the latest technology news from top sources including TechCrunch, The Verge, Wired, and more. Real-time tech news aggregation.",
+        "keywords": "tech news, technology, news aggregator, AI, startups, gadgets"
+    },
+    "common": {
+        "loading": "Loading...",
+        "refresh": "Refresh",
+        "search": "Search",
+        "about": "About",
+        "settings": "Settings",
+        "language": "Language",
+        "darkMode": "Dark Mode",
+        "lightMode": "Light Mode"
+    },
+    "news": {
+        "articles": "articles",
+        "noNews": "No news available",
+        "source": "Source",
+        "readMore": "Read More",
+        "openOriginal": "Open Original"
+    },
+    "categories": {
+        "all": "All",
+        "news": "News",
+        "business": "Business",
+        "technology": "Technology",
+        "science": "Science",
+        "sports": "Sports",
+        "entertainment": "Entertainment",
+        "lifestyle": "Lifestyle",
+        "opinion": "Opinion"
+    },
+    "sidebar": {
+        "system": "SYSTEM",
+        "category": "CATEGORY",
+        "language": "LANGUAGE",
+        "selected": "SELECTED",
+        "allLanguages": "All Languages",
+        "default": "Default",
+        "custom": "Custom",
+        "loading": "Loading",
+        "myFeeds": "MY FEEDS",
+        "updated": "UPDATED",
+        "addFeed": "ADD FEED",
+        "feedSettings": "FEED SETTINGS",
+        "columnLayout": "COLUMN LAYOUT"
+    },
+    "footer": {
+        "developedBy": "Developed by",
+        "copyright": "© 2025 RETRUI"
+    }
+}

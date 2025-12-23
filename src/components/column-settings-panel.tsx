@@ -77,7 +77,7 @@ export function ColumnSettingsPanel({
   // New column form state
   const [newColumnType, setNewColumnType] = useState<ColumnType>('category')
   const [newColumnCategory, setNewColumnCategory] = useState('Technology')
-  const [newColumnLanguage, setNewColumnLanguage] = useState<'en' | 'tr' | 'all'>('en')
+  const [newColumnLanguage, setNewColumnLanguage] = useState<string>('en')
   const [newColumnTitle, setNewColumnTitle] = useState('')
 
   // Load layouts on mount
@@ -382,8 +382,14 @@ export function ColumnSettingsPanel({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="all">All Languages</SelectItem>
                           <SelectItem value="en">English</SelectItem>
                           <SelectItem value="tr">Türkçe</SelectItem>
+                          <SelectItem value="de">Deutsch</SelectItem>
+                          <SelectItem value="fr">Français</SelectItem>
+                          <SelectItem value="es">Español</SelectItem>
+                          <SelectItem value="zh">中文</SelectItem>
+                          <SelectItem value="hi">हिन्दी</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -499,9 +505,8 @@ export function ColumnSettingsPanel({
                   key={layout.id}
                   variant="ghost"
                   onClick={() => handleSelectLayout(layout.id)}
-                  className={`text-xs font-mono border-2 h-auto py-3 flex flex-col ${
-                    selectedLayoutId === layout.id ? 'bg-black text-white' : ''
-                  }`}
+                  className={`text-xs font-mono border-2 h-auto py-3 flex flex-col ${selectedLayoutId === layout.id ? 'bg-black text-white' : ''
+                    }`}
                 >
                   <span className="font-bold">{layout.name}</span>
                   <span className="text-xs opacity-70">{layout.columns.length} columns</span>

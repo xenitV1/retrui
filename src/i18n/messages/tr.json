@@ -1,0 +1,54 @@
+{
+    "meta": {
+        "title": "Retrui - En Son Teknoloji Haberleri",
+        "description": "TechCrunch, The Verge, Wired ve daha fazlasından en son teknoloji haberlerini takip edin. Gerçek zamanlı haber toplama.",
+        "keywords": "teknoloji haberleri, gündem, haber, yapay zeka, girişimler, teknoloji"
+    },
+    "common": {
+        "loading": "Yükleniyor...",
+        "refresh": "Yenile",
+        "search": "Ara",
+        "about": "Hakkında",
+        "settings": "Ayarlar",
+        "language": "Dil",
+        "darkMode": "Karanlık Mod",
+        "lightMode": "Aydınlık Mod"
+    },
+    "news": {
+        "articles": "haber",
+        "noNews": "Haber bulunamadı",
+        "source": "Kaynak",
+        "readMore": "Devamını Oku",
+        "openOriginal": "Orijinali Aç"
+    },
+    "categories": {
+        "all": "Tümü",
+        "news": "Haberler",
+        "business": "İş Dünyası",
+        "technology": "Teknoloji",
+        "science": "Bilim",
+        "sports": "Spor",
+        "entertainment": "Eğlence",
+        "lifestyle": "Yaşam",
+        "opinion": "Görüş"
+    },
+    "sidebar": {
+        "system": "SİSTEM",
+        "category": "KATEGORİ",
+        "language": "DİL",
+        "selected": "SEÇİLEN",
+        "allLanguages": "Tüm Diller",
+        "default": "Varsayılan",
+        "custom": "Özel",
+        "loading": "Yükleniyor",
+        "myFeeds": "HABER KAYNAKLARIM",
+        "updated": "GÜNCELLEME",
+        "addFeed": "KAYNAK EKLE",
+        "feedSettings": "KAYNAK AYARLARI",
+        "columnLayout": "SÜTUN DÜZENİ"
+    },
+    "footer": {
+        "developedBy": "Geliştiren",
+        "copyright": "© 2025 RETRUI"
+    }
+}
