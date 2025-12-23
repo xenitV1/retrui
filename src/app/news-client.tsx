@@ -756,7 +756,6 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
     }, 100) // Small debounce to prevent rapid calls
 
     return () => clearTimeout(timeoutId)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultLanguage])
 
   // Initialize with initialNews prop from server-side rendering
@@ -810,7 +809,6 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
     }, 60000)
 
     return () => clearInterval(refreshInterval)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Apply dark mode class to document

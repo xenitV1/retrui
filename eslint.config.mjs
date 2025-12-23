@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const compat = new FlatCompat({
-  baseDirectory: process.cwd(),
+  baseDirectory: __dirname,
 });
 
 const eslintConfig = [
@@ -19,19 +19,19 @@ const eslintConfig = [
       "@typescript-eslint/no-non-null-assertion": "off",
       "@typescript-eslint/ban-ts-comment": "off",
       "@typescript-eslint/prefer-as-const": "off",
-      
+
       // React 相关规则
       "react-hooks/exhaustive-deps": "off",
       "react/no-unescaped-entities": "off",
       "react/display-name": "off",
       "react/prop-types": "off",
-      
+
       // Next.js 相关规则
       "@next/next/no-img-element": "off",
       "@next/next/no-html-link-for-pages": "off",
-      
+
       // 一般JavaScript规则
-      "prefer-const": "off",  // 关闭prefer-const规则
+      "prefer-const": "off",
       "no-unused-vars": "off",
       "no-console": "off",
       "no-debugger": "off",
