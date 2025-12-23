@@ -1,19 +1,40 @@
 /**
- * Home Page - Server Component
- * Uses streaming SSR for instant initial render
- * News is loaded progressively on the client side
+ * Home Page - Server Component with SSR for SEO
+ * 
+ * IMPORTANT: This page fetches initial news on the server side
+ * so that Google can crawl and index the content.
+ * 
+ * Uses ISR (Incremental Static Regeneration) to refresh every 5 minutes.
  */
 import { Suspense } from 'react'
 import NewsClient from './news-client'
 import { defaultLocale } from '@/i18n/config'
+import { fetchInitialNews } from '@/lib/server-news'
+import { NewsListSchema } from '@/components/news-schema'
 
-export default function Home() {
+// ISR: Revalidate every 5 minutes for fresh news
+export const revalidate = 300
+
+export default async function Home() {
+  // Fetch initial news on the server for SEO
+  const initialNews = await fetchInitialNews(defaultLocale)
+
+  // Prepare news items for structured data
+  const schemaItems = initialNews.slice(0, 10).map((news, index) => ({
+    title: news.title,
+    url: news.url,
+    position: index + 1,
+  }))
 
   return (
-    <Suspense fallback={<LoadingFallback />}>
-      <NewsClient initialNews={[]} currentLocale={defaultLocale} />
-    </Suspense>
+    <>
+      {/* Structured Data for SEO */}
+      <NewsListSchema items={schemaItems} />
 
+      <Suspense fallback={<LoadingFallback />}>
+        <NewsClient initialNews={initialNews} currentLocale={defaultLocale} />
+      </Suspense>
+    </>
   )
 }
 

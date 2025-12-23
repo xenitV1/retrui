@@ -10,10 +10,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // Ensure packages work correctly on Vercel serverless
   serverExternalPackages: ['@extractus/article-extractor'],
-  // Fix eslint directory issue
-  eslint: {
-    dirs: ['src'],
-  },
 };
 
 export default nextConfig;

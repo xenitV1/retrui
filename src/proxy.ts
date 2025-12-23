@@ -6,7 +6,7 @@ import { locales, defaultLocale, getLocaleFromHeader, isValidLocale, type Locale
 const PUBLIC_FILE = /\.(.*)$/
 const IGNORED_PATHS = ['_next', 'api', 'favicon.ico', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'manifest.json', 'robots.txt', 'sitemap.xml']
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl
 
     // Skip public files and API routes
