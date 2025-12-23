@@ -15,7 +15,10 @@
       "Bash(npm install:*)",
       "Bash(npm run test:*)",
       "Bash(del:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx next lint:*)",
+      "Bash(npx:*)"
     ],
     "deny": [],
     "ask": []

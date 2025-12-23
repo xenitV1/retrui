@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Search, Check, XCircle, Star, Filter, TrendingUp, Globe, Shield, Palette } from 'lucide-react'
+import { X, Search, Check, XCircle, Star, Filter, TrendingUp, Globe, Shield, AlertCircle, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -31,13 +31,14 @@ import {
   isFeedEnabled,
   isFeedBlocked,
   isFeedFavorite,
-  setFeedColor,
-  removeFeedColor,
-  resetAllFeedColors,
-  RETRO_COLORS,
-  DEFAULT_CATEGORY_COLORS,
   type FeedPreferences,
 } from '@/lib/feed-preferences'
+import {
+  getDisabledFeeds,
+  reEnableFeed,
+  getFeedHealth,
+  type FeedHealthEntry
+} from '@/lib/feed-health'
 
 interface FeedSettingsPanelProps {
   open: boolean
@@ -51,11 +52,14 @@ export function FeedSettingsPanel({ open, onOpenChange, onPreferencesChange }: F
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [selectedRegion, setSelectedRegion] = useState<string>('All')
   const [loading, setLoading] = useState(false)
+  const [disabledFeedUrls, setDisabledFeedUrls] = useState<Set<string>>(new Set())
+  const [feedHealthMap, setFeedHealthMap] = useState<Map<string, FeedHealthEntry>>(new Map())
 
   // Load preferences when panel opens
   useEffect(() => {
     if (open) {
       loadPreferences()
+      loadDisabledFeeds()
     }
   }, [open])
 
@@ -68,6 +72,25 @@ export function FeedSettingsPanel({ open, onOpenChange, onPreferencesChange }: F
       console.error('Failed to load preferences:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadDisabledFeeds = async () => {
+    try {
+      const disabled = await getDisabledFeeds()
+      setDisabledFeedUrls(new Set(disabled))
+
+      // Load health data for disabled feeds
+      const healthMap = new Map<string, FeedHealthEntry>()
+      for (const url of disabled) {
+        const health = await getFeedHealth(url)
+        if (health) {
+          healthMap.set(url, health)
+        }
+      }
+      setFeedHealthMap(healthMap)
+    } catch (error) {
+      console.error('Failed to load disabled feeds:', error)
     }
   }
 
@@ -129,6 +152,21 @@ export function FeedSettingsPanel({ open, onOpenChange, onPreferencesChange }: F
     await refreshPreferences()
   }
 
+  const handleReEnableFeed = async (feedUrl: string) => {
+    try {
+      await reEnableFeed(feedUrl)
+      // Refresh disabled feeds list
+      await loadDisabledFeeds()
+    } catch (error) {
+      console.error('Failed to re-enable feed:', error)
+    }
+  }
+
+  // Get feeds that are disabled by circuit breaker
+  const getDisabledFeedsList = () => {
+    return RSS_FEEDS.filter(feed => disabledFeedUrls.has(feed.url))
+  }
+
   // Filter feeds based on search, category, and region
   const getFilteredFeeds = () => {
     let filtered = [...RSS_FEEDS]
@@ -162,6 +200,7 @@ export function FeedSettingsPanel({ open, onOpenChange, onPreferencesChange }: F
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-4xl max-h-[80vh]">
+          <DialogTitle className="sr-only">Feed Settings - Loading</DialogTitle>
           <div className="flex items-center justify-center py-12">
             <p className="text-sm font-mono">Loading feed preferences...</p>
           </div>
@@ -175,7 +214,12 @@ export function FeedSettingsPanel({ open, onOpenChange, onPreferencesChange }: F
       <DialogContent className="max-w-5xl max-h-[85vh] p-0">
         <DialogHeader className="p-4 border-b">
           <div className="flex items-center justify-between">
-            <DialogTitle className="font-mono text-lg">[ FEED SETTINGS ]</DialogTitle>
+            <div>
+              <DialogTitle className="font-mono text-lg">[ FEED SETTINGS ]</DialogTitle>
+              <DialogDescription className="font-mono text-xs">
+                Configure your news feed preferences, including enabled feeds, favorites, and blocked feeds.
+              </DialogDescription>
+            </div>
             <Button
               variant="ghost"
               size="icon"
@@ -202,13 +246,18 @@ export function FeedSettingsPanel({ open, onOpenChange, onPreferencesChange }: F
                 <Shield className="w-3 h-3 mr-1" />
                 BLOCKED
               </TabsTrigger>
+              <TabsTrigger value="disabled" className="font-mono text-xs relative">
+                <AlertCircle className="w-3 h-3 mr-1" />
+                DISABLED
+                {disabledFeedUrls.size > 0 && (
+                  <Badge variant="destructive" className="ml-1 h-4 px-1 text-xs">
+                    {disabledFeedUrls.size}
+                  </Badge>
+                )}
+              </TabsTrigger>
               <TabsTrigger value="categories" className="font-mono text-xs">
                 <Globe className="w-3 h-3 mr-1" />
                 CATEGORIES
-              </TabsTrigger>
-              <TabsTrigger value="colors" className="font-mono text-xs">
-                <Palette className="w-3 h-3 mr-1" />
-                COLORS
               </TabsTrigger>
               <TabsTrigger value="stats" className="font-mono text-xs">
                 <TrendingUp className="w-3 h-3 mr-1" />
@@ -417,6 +466,78 @@ export function FeedSettingsPanel({ open, onOpenChange, onPreferencesChange }: F
             </div>
           </TabsContent>
 
+          {/* DISABLED TAB (Circuit Breaker) */}
+          <TabsContent value="disabled" className="p-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-mono text-sm font-bold">
+                    {disabledFeedUrls.size} Temporarily Disabled Feeds
+                  </h3>
+                  <p className="text-xs text-muted-foreground font-mono">
+                    Feeds that failed repeatedly and are temporarily disabled by the system
+                  </p>
+                </div>
+              </div>
+
+              <ScrollArea className="h-[450px] pr-4">
+                <div className="space-y-2">
+                  {disabledFeedUrls.size === 0 ? (
+                    <div className="text-center py-12 text-green-600 font-mono text-sm">
+                      <Check className="w-8 h-8 mx-auto mb-2" />
+                      All feeds are healthy!
+                    </div>
+                  ) : (
+                    getDisabledFeedsList().map(feed => {
+                      const health = feedHealthMap.get(feed.url)
+                      const failureCount = health?.failureCount || 0
+                      const successCount = health?.successCount || 0
+                      const failureRate = successCount + failureCount > 0
+                        ? Math.round((failureCount / (successCount + failureCount)) * 100)
+                        : 0
+
+                      return (
+                        <div
+                          key={feed.url}
+                          className="flex items-center justify-between p-3 border rounded-sm bg-orange-50 dark:bg-orange-950/20"
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <AlertCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-mono text-sm font-medium truncate">{feed.name}</div>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span>{feed.category}</span>
+                                <span>•</span>
+                                <span className="text-orange-600">
+                                  {failureCount}/{successCount + failureCount} failed ({failureRate}%)
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleReEnableFeed(feed.url)}
+                            className="h-7 text-xs font-mono flex-shrink-0"
+                          >
+                            <RefreshCw className="w-3 h-3 mr-1" />
+                            Re-enable
+                          </Button>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              </ScrollArea>
+
+              {disabledFeedUrls.size > 0 && (
+                <div className="text-xs text-muted-foreground font-mono text-center pt-2 border-t">
+                  Feeds are automatically disabled after 5 consecutive failures and re-enabled after 1 hour
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
           {/* CATEGORIES TAB */}
           <TabsContent value="categories" className="p-4">
             <div className="space-y-4">
@@ -453,187 +574,6 @@ export function FeedSettingsPanel({ open, onOpenChange, onPreferencesChange }: F
                     </button>
                   )
                 })}
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* COLORS TAB */}
-          <TabsContent value="colors" className="p-4">
-            <div className="space-y-6">
-              {/* Reset button */}
-              <div className="flex items-center justify-between">
-                <div className="text-xs font-mono text-muted-foreground">
-                  Customize feed colors. If no custom color is set, the default category color will be used.
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    await resetAllFeedColors()
-                    await refreshPreferences()
-                  }}
-                  className="text-xs font-mono"
-                  disabled={Object.keys(preferences.feedColors || {}).length === 0}
-                >
-                  Reset All Colors
-                </Button>
-              </div>
-
-              {/* Available colors palette */}
-              <div>
-                <h3 className="font-mono text-sm font-bold mb-3">Available Retro Colors</h3>
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(RETRO_COLORS).map(([name, color]) => (
-                    <div
-                      key={name}
-                      className="flex items-center gap-2 border-2 rounded-sm px-3 py-2"
-                      style={{ borderColor: color }}
-                    >
-                      <div
-                        className="w-6 h-6 rounded-sm border"
-                        style={{ backgroundColor: color }}
-                      />
-                      <span className="text-xs font-mono capitalize">{name}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Category default colors */}
-              <div>
-                <h3 className="font-mono text-sm font-bold mb-3">Default Category Colors</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {Object.entries(DEFAULT_CATEGORY_COLORS).map(([cat, color]) => (
-                    <div
-                      key={cat}
-                      className="flex items-center justify-between p-3 border-2 rounded-sm"
-                      style={{ borderColor: color }}
-                    >
-                      <span className="font-mono text-sm font-medium">{cat}</span>
-                      <div
-                        className="w-6 h-6 rounded-sm border"
-                        style={{ backgroundColor: color }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Custom colored feeds */}
-              <div>
-                <h3 className="font-mono text-sm font-bold mb-3">
-                  Custom Colored Feeds ({Object.keys(preferences.feedColors || {}).length})
-                </h3>
-                <ScrollArea className="h-[300px] pr-4">
-                  <div className="space-y-2">
-                    {Object.keys(preferences.feedColors || {}).length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground font-mono text-sm">
-                        No custom colors set. Click on any feed below to assign a custom color.
-                      </div>
-                    ) : (
-                      Object.entries(preferences.feedColors || {}).map(([feedName, color]) => {
-                        const feed = RSS_FEEDS.find(f => f.name === feedName)
-                        return (
-                          <div
-                            key={feedName}
-                            className="flex items-center justify-between p-3 border-2 rounded-sm"
-                            style={{ borderColor: color }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div
-                                className="w-6 h-6 rounded-sm border"
-                                style={{ backgroundColor: color }}
-                              />
-                              <div>
-                                <div className="font-mono text-sm font-medium">{feedName}</div>
-                                <div className="text-xs text-muted-foreground">{feed?.category || 'Unknown'}</div>
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={async () => {
-                                await removeFeedColor(feedName)
-                                await refreshPreferences()
-                              }}
-                              className="h-7 text-xs font-mono"
-                            >
-                              <X className="w-3 h-3 mr-1" />
-                              Remove
-                            </Button>
-                          </div>
-                        )
-                      })
-                    )}
-                  </div>
-                </ScrollArea>
-              </div>
-
-              {/* Feed color picker */}
-              <div>
-                <h3 className="font-mono text-sm font-bold mb-3">Set Feed Color</h3>
-                <Input
-                  placeholder="Search feeds..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="font-mono text-sm mb-3"
-                />
-                <ScrollArea className="h-[300px] pr-4">
-                  <div className="space-y-1">
-                    {RSS_FEEDS.filter(f =>
-                      searchQuery
-                        ? f.name.toLowerCase().includes(searchQuery.toLowerCase())
-                        : true
-                    ).map(feed => {
-                      const customColor = preferences.feedColors?.[feed.name]
-                      const defaultColor = DEFAULT_CATEGORY_COLORS[feed.category] || DEFAULT_CATEGORY_COLORS['All']
-
-                      return (
-                        <div
-                          key={feed.name}
-                          className="flex items-center justify-between p-2 border rounded-sm"
-                        >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div
-                              className="w-5 h-5 rounded-sm border flex-shrink-0"
-                              style={{ backgroundColor: customColor || defaultColor }}
-                            />
-                            <span className="font-mono text-sm truncate">{feed.name}</span>
-                            <span className="text-xs text-muted-foreground truncate">{feed.category}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {Object.entries(RETRO_COLORS).map(([name, color]) => (
-                              <button
-                                key={name}
-                                onClick={async () => {
-                                  await setFeedColor(feed.name, color)
-                                  await refreshPreferences()
-                                }}
-                                className={`w-5 h-5 rounded-sm border transition-all hover:scale-110 ${
-                                  customColor === color ? 'ring-2 ring-offset-1' : ''
-                                }`}
-                                style={{ backgroundColor: color }}
-                                title={name}
-                              />
-                            ))}
-                            {customColor && (
-                              <button
-                                onClick={async () => {
-                                  await removeFeedColor(feed.name)
-                                  await refreshPreferences()
-                                }}
-                                className="p-1 text-muted-foreground hover:text-destructive"
-                                title="Remove custom color"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </ScrollArea>
               </div>
             </div>
           </TabsContent>

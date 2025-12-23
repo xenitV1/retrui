@@ -34,10 +34,10 @@ const NEWS_POLITICS: RssFeed[] = [
   { name: 'NTV Haber', url: 'https://www.ntv.com.tr/gundem.rss', category: 'News', subcategory: 'General', region: 'TR', language: 'tr' },
   { name: 'NTV Son Dakika', url: 'https://www.ntv.com.tr/son-dakika.rss', category: 'News', subcategory: 'Breaking', region: 'TR', language: 'tr' },
   { name: 'AA Son Dakika', url: 'https://www.aa.com.tr/tr/rss/default?cat=guncel', category: 'News', subcategory: 'Breaking', region: 'TR', language: 'tr' },
-  { name: 'Anadolu Ajansı', url: 'https://www.aa.com.tr/tr/rss/default?cat=guncel', category: 'News', subcategory: 'General', region: 'TR', language: 'tr' },
+  { name: 'Anadolu Ajansı Haber', url: 'https://www.aa.com.tr/tr/rss/default?cat=guncel', category: 'News', subcategory: 'General', region: 'TR', language: 'tr' },
   { name: 'Sabah Son Dakika', url: 'https://www.sabah.com.tr/rss/son-dakika.xml', category: 'News', subcategory: 'Breaking', region: 'TR', language: 'tr' },
   { name: 'Sözcü Haber', url: 'https://www.sozcu.com.tr/rss/rss.xml?category=son-dakika', category: 'News', subcategory: 'Breaking', region: 'TR', language: 'tr' },
-  { name: 'Bloomberg HT', url: 'https://www.bloomberght.com/rss', category: 'News', subcategory: 'Business', region: 'TR', language: 'tr' },
+  { name: 'Bloomberg HT News', url: 'https://www.bloomberght.com/rss', category: 'News', subcategory: 'Business', region: 'TR', language: 'tr' },
 
   // Turkish News - Politics
   { name: 'AA Siyaset', url: 'https://www.aa.com.tr/tr/rss/default?cat=siyaset', category: 'News', subcategory: 'Politics', region: 'TR', language: 'tr' },
@@ -97,13 +97,12 @@ const BUSINESS_FINANCE: RssFeed[] = [
   { name: 'Entrepreneur', url: 'https://www.entrepreneur.com/latest.rss', category: 'Business', subcategory: 'Entrepreneurship', region: 'US', language: 'en' },
 
   // Turkish Business
-  { name: 'Bloomberg HT', url: 'https://www.bloomberght.com/rss', category: 'Business', subcategory: 'Markets', region: 'TR', language: 'tr' },
+  { name: 'Bloomberg HT Markets', url: 'https://www.bloomberght.com/rss', category: 'Business', subcategory: 'Markets', region: 'TR', language: 'tr' },
   { name: 'AA Ekonomi', url: 'https://www.aa.com.tr/tr/rss/default?cat=ekonomi', category: 'Business', subcategory: 'News', region: 'TR', language: 'tr' },
   { name: 'NTV Ekonomi', url: 'https://www.ntv.com.tr/ekonomi.rss', category: 'Business', subcategory: 'News', region: 'TR', language: 'tr' },
   { name: 'Döviz', url: 'https://www.doviz.com/news/rss', category: 'Business', subcategory: 'Finance', region: 'TR', language: 'tr' },
   { name: 'Ekonomi Gazetesi', url: 'https://www.ekonomigazetesi.com/rss.xml', category: 'Business', subcategory: 'News', region: 'TR', language: 'tr' },
   { name: 'Forbes Türkiye', url: 'https://www.forbes.com.tr/rss', category: 'Business', subcategory: 'News', region: 'TR', language: 'tr' },
-  { name: 'Bigpara', url: 'https://bigpara.hurriyet.com.tr/rss', category: 'Business', subcategory: 'Personal Finance', region: 'TR', language: 'tr' },
   { name: 'Foreks', url: 'https://www.foreks.com/rss', category: 'Business', subcategory: 'Trading', region: 'TR', language: 'tr' },
   { name: 'Investing Türkiye', url: 'https://tr.investing.com/rss/news.rss', category: 'Business', subcategory: 'Markets', region: 'TR', language: 'tr' },
 
@@ -131,7 +130,7 @@ const TECHNOLOGY: RssFeed[] = [
   { name: 'VentureBeat', url: 'https://venturebeat.com/feed/', category: 'Technology', subcategory: 'AI', region: 'US', language: 'en' },
   { name: 'Mashable Tech', url: 'https://mashable.com/feeds/rss/tech', category: 'Technology', subcategory: 'General', region: 'US', language: 'en' },
   { name: 'BBC Technology', url: 'https://feeds.bbci.co.uk/news/technology/rss.xml', category: 'Technology', subcategory: 'General', region: 'UK', language: 'en' },
-  { name: 'MIT Technology Review', url: 'https://www.technologyreview.com/feed/', category: 'Technology', subcategory: 'Innovation', region: 'US', language: 'en' },
+  { name: 'MIT Technology Review Tech', url: 'https://www.technologyreview.com/feed/', category: 'Technology', subcategory: 'Innovation', region: 'US', language: 'en' },
   { name: 'PCWorld', url: 'https://www.pcworld.com/index.rss', category: 'Technology', subcategory: 'Hardware', region: 'US', language: 'en' },
   { name: 'The Next Web', url: 'https://thenextweb.com/rss/', category: 'Technology', subcategory: 'General', region: 'NL', language: 'en' },
   { name: 'Digital Trends', url: 'https://www.digitaltrends.com/feed/', category: 'Technology', subcategory: 'Consumer', region: 'US', language: 'en' },
@@ -144,7 +143,7 @@ const TECHNOLOGY: RssFeed[] = [
   { name: 'Gizmodo', url: 'https://gizmodo.com/rss', category: 'Technology', subcategory: 'Gadgets', region: 'US', language: 'en' },
   { name: 'Tom\'s Hardware', url: 'https://www.tomshardware.com/feeds/rss', category: 'Technology', subcategory: 'Hardware', region: 'US', language: 'en' },
   { name: 'The Verge Tech', url: 'https://www.theverge.com/rss/tech/index.xml', category: 'Technology', subcategory: 'General', region: 'US', language: 'en' },
-  { name: 'Wired Science', url: 'https://www.wired.com/feed/category/science/latest/rss', category: 'Technology', subcategory: 'Science', region: 'US', language: 'en' },
+  { name: 'Wired Tech Science', url: 'https://www.wired.com/feed/category/science/latest/rss', category: 'Technology', subcategory: 'Science', region: 'US', language: 'en' },
   { name: 'Recode', url: 'https://www.vox.com/rss/technology/index.xml', category: 'Technology', subcategory: 'Industry', region: 'US', language: 'en' },
 
   // Turkish Tech
@@ -181,7 +180,6 @@ const SCIENCE: RssFeed[] = [
   { name: 'Live Science', url: 'https://www.livescience.com/feeds/all', category: 'Science', subcategory: 'General', region: 'US', language: 'en' },
   { name: 'Ars Technica Science', url: 'https://feeds.arstechnica.com/arstechnica/science', category: 'Science', subcategory: 'General', region: 'US', language: 'en' },
   { name: 'Wired Science', url: 'https://www.wired.com/feed/category/science/latest/rss', category: 'Science', subcategory: 'General', region: 'US', language: 'en' },
-  { name: 'MIT Technology Review', url: 'https://www.technologyreview.com/feed/', category: 'Science', subcategory: 'Innovation', region: 'US', language: 'en' },
   { name: 'Science Friday', url: 'https://www.sciencefriday.com/feed/', category: 'Science', subcategory: 'Podcast', region: 'US', language: 'en' },
   { name: 'AA Bilim', url: 'https://www.aa.com.tr/tr/rss/default?cat=bilim', category: 'Science', subcategory: 'General', region: 'TR', language: 'tr' },
 

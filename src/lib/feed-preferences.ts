@@ -16,7 +16,6 @@ export interface FeedPreferences {
   blockedFeeds: string[]      // Feed names that are blocked
   favoriteFeeds: string[]     // Feed names marked as favorites
   hiddenCategories: string[]  // Categories to hide
-  feedColors: Record<string, string>  // Custom colors for feeds by feed name
 }
 
 const DEFAULT_PREFERENCES: FeedPreferences = {
@@ -24,7 +23,6 @@ const DEFAULT_PREFERENCES: FeedPreferences = {
   blockedFeeds: [],
   favoriteFeeds: [],
   hiddenCategories: [],
-  feedColors: {},             // Empty = use default colors
 }
 
 /**
@@ -269,84 +267,4 @@ export function getFeedStats(feeds: RssFeed[], preferences: FeedPreferences): {
   }
 
   return stats
-}
-
-// Retro theme compatible color palette
-export const RETRO_COLORS = {
-  // Classic terminal colors
-  green: '#00ff00',
-  amber: '#ffb000',
-  cyan: '#00ffff',
-  // Muted retro colors
-  sage: '#9dc183',
-  mustard: '#e1a730',
-  teal: '#4db6ac',
-  coral: '#ff7f50',
-  lavender: '#b39ddb',
-  rust: '#c75b5b',
-  // Dark mode compatible
-  cream: '#f5f5dc',
-  mint: '#98ff98',
-  peach: '#ffdab9',
-  plum: '#dda0dd',
-}
-
-// Default color mappings for categories
-export const DEFAULT_CATEGORY_COLORS: Record<string, string> = {
-  'World': RETRO_COLORS.mustard,
-  'Technology': RETRO_COLORS.cyan,
-  'Business': RETRO_COLORS.sage,
-  'Science': RETRO_COLORS.teal,
-  'Health': RETRO_COLORS.coral,
-  'Sports': RETRO_COLORS.rust,
-  'Entertainment': RETRO_COLORS.plum,
-  'Politics': RETRO_COLORS.amber,
-  'All': RETRO_COLORS.green,
-}
-
-/**
- * Get color for a feed (from custom preferences or default category color)
- */
-export function getFeedColor(
-  feedName: string,
-  category: string,
-  preferences: FeedPreferences
-): string {
-  // Check if user has custom color for this feed
-  if (preferences.feedColors[feedName]) {
-    return preferences.feedColors[feedName]
-  }
-
-  // Use default category color
-  return DEFAULT_CATEGORY_COLORS[category] || DEFAULT_CATEGORY_COLORS['All']
-}
-
-/**
- * Set custom color for a feed
- */
-export async function setFeedColor(feedName: string, color: string): Promise<FeedPreferences> {
-  const prefs = await getFeedPreferences()
-  prefs.feedColors[feedName] = color
-  await saveFeedPreferences(prefs)
-  return prefs
-}
-
-/**
- * Remove custom color for a feed (revert to default)
- */
-export async function removeFeedColor(feedName: string): Promise<FeedPreferences> {
-  const prefs = await getFeedPreferences()
-  delete prefs.feedColors[feedName]
-  await saveFeedPreferences(prefs)
-  return prefs
-}
-
-/**
- * Reset all custom colors
- */
-export async function resetAllFeedColors(): Promise<FeedPreferences> {
-  const prefs = await getFeedPreferences()
-  prefs.feedColors = {}
-  await saveFeedPreferences(prefs)
-  return prefs
 }

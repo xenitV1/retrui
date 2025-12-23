@@ -56,25 +56,130 @@ export default function AboutPage() {
                             </div>
                             <div className="space-y-4 font-mono text-sm">
                                 <p>
-                                    <strong>RSS Feed Aggregation:</strong> Retrui aggregates news from 20+ trusted technology RSS feeds in real-time.
+                                    <strong>RSS Feed Aggregation:</strong> Retrui aggregates news from 175+ trusted RSS feeds in real-time across 8 categories.
                                 </p>
+
+                                {/* News & Politics */}
                                 <div className="bg-gray-100 p-4 border-2 border-black">
-                                    <p className="font-bold mb-2">Sources include:</p>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                                    <p className="font-bold mb-2">📰 NEWS & POLITICS (51 feeds)</p>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 text-xs">
+                                        <span>• BBC World</span>
+                                        <span>• CNN World</span>
+                                        <span>• Al Jazeera</span>
+                                        <span>• The Guardian</span>
+                                        <span>• Sky News</span>
+                                        <span>• NTV Haber</span>
+                                        <span>• BBC Türkçe</span>
+                                        <span>• CNN Türk</span>
+                                        <span>• DW Türkçe</span>
+                                        <span>• Sözcü</span>
+                                        <span>• T24</span>
+                                        <span>• Anadolu Ajansı</span>
+                                    </div>
+                                </div>
+
+                                {/* Business & Finance */}
+                                <div className="bg-gray-100 p-4 border-2 border-black">
+                                    <p className="font-bold mb-2">💰 BUSINESS & FINANCE (23 feeds)</p>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 text-xs">
+                                        <span>• Bloomberg</span>
+                                        <span>• WSJ</span>
+                                        <span>• CNBC</span>
+                                        <span>• MarketWatch</span>
+                                        <span>• Forbes</span>
+                                        <span>• Bloomberg HT</span>
+                                        <span>• CoinDesk</span>
+                                        <span>• CoinTelegraph</span>
+                                        <span>• Decrypt</span>
+                                    </div>
+                                </div>
+
+                                {/* Technology */}
+                                <div className="bg-gray-100 p-4 border-2 border-black">
+                                    <p className="font-bold mb-2">💻 TECHNOLOGY (44 feeds)</p>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 text-xs">
                                         <span>• TechCrunch</span>
                                         <span>• The Verge</span>
                                         <span>• Wired</span>
                                         <span>• Ars Technica</span>
                                         <span>• Engadget</span>
-                                        <span>• VentureBeat</span>
-                                        <span>• MIT Tech Review</span>
-                                        <span>• BBC Technology</span>
                                         <span>• Hacker News</span>
-                                        <span>• Slashdot</span>
                                         <span>• 9to5Mac</span>
                                         <span>• Android Authority</span>
+                                        <span>• ShiftDelete</span>
+                                        <span>• Donanım Haber</span>
+                                        <span>• Technopat</span>
+                                        <span>• Webrazzi</span>
                                     </div>
                                 </div>
+
+                                {/* Science */}
+                                <div className="bg-gray-100 p-4 border-2 border-black">
+                                    <p className="font-bold mb-2">🔬 SCIENCE (17 feeds)</p>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 text-xs">
+                                        <span>• Science Magazine</span>
+                                        <span>• NASA News</span>
+                                        <span>• Space.com</span>
+                                        <span>• New Scientist</span>
+                                        <span>• Phys.org</span>
+                                        <span>• Evrim Ağacı</span>
+                                    </div>
+                                </div>
+
+                                {/* Sports */}
+                                <div className="bg-gray-100 p-4 border-2 border-black">
+                                    <p className="font-bold mb-2">⚽ SPORTS (6 feeds)</p>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 text-xs">
+                                        <span>• ESPN</span>
+                                        <span>• BBC Sport</span>
+                                        <span>• The Athletic</span>
+                                        <span>• CBS Sports</span>
+                                        <span>• AA Spor</span>
+                                        <span>• Sabah Spor</span>
+                                    </div>
+                                </div>
+
+                                {/* Entertainment */}
+                                <div className="bg-gray-100 p-4 border-2 border-black">
+                                    <p className="font-bold mb-2">🎬 ENTERTAINMENT (19 feeds)</p>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 text-xs">
+                                        <span>• Variety</span>
+                                        <span>• Hollywood Reporter</span>
+                                        <span>• Rolling Stone</span>
+                                        <span>• IGN</span>
+                                        <span>• Polygon</span>
+                                        <span>• PC Gamer</span>
+                                    </div>
+                                </div>
+
+                                {/* Lifestyle */}
+                                <div className="bg-gray-100 p-4 border-2 border-black">
+                                    <p className="font-bold mb-2">🌿 LIFESTYLE (7 feeds)</p>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 text-xs">
+                                        <span>• Men&apos;s Health</span>
+                                        <span>• Dezeen</span>
+                                        <span>• Design Milk</span>
+                                        <span>• NTV Yaşam</span>
+                                    </div>
+                                </div>
+
+                                {/* Opinion */}
+                                <div className="bg-gray-100 p-4 border-2 border-black">
+                                    <p className="font-bold mb-2">💭 OPINION & ANALYSIS (18 feeds)</p>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 text-xs">
+                                        <span>• The Atlantic</span>
+                                        <span>• New Yorker</span>
+                                        <span>• Vox</span>
+                                        <span>• Time Magazine</span>
+                                        <span>• The Intercept</span>
+                                        <span>• Mother Jones</span>
+                                    </div>
+                                </div>
+
+                                <p className="text-xs text-gray-600 italic mt-4">
+                                    * Total of 175+ RSS feeds across 8 categories, supporting both English and Turkish sources.
+                                </p>
+
                                 <p>
                                     <strong>Content Extraction:</strong> When you click on an article, we use{' '}
                                     <a href="https://github.com/nickvergessen/article-extractor" target="_blank" rel="noopener noreferrer" className="underline hover:bg-black hover:text-white">
@@ -88,6 +193,7 @@ export default function AboutPage() {
                             </div>
                         </div>
                     </section>
+
 
                     {/* How Data is Stored */}
                     <section className="mb-12">

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { Search, Clock, X, RefreshCw, ChevronLeft, ChevronRight, Filter, ExternalLink, ArrowRight, Trash2, ChevronDown, Twitter, Github, Info, Plus, Settings, LayoutTemplate } from 'lucide-react'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
@@ -15,10 +16,6 @@ import { RSS_FEEDS, MAIN_CATEGORIES, type RssFeed } from '@/lib/rss-feeds'
 import {
   getFeedPreferences,
   filterEnabledFeeds,
-  getFeedColor,
-  setFeedColor,
-  removeFeedColor,
-  RETRO_COLORS,
   type FeedPreferences
 } from '@/lib/feed-preferences'
 import { FeedSettingsPanel } from '@/components/feed-settings-panel'
@@ -29,6 +26,12 @@ import {
   type ColumnLayout,
   type Column
 } from '@/lib/column-layouts'
+import {
+  recordFeedSuccess,
+  recordFeedFailure,
+  filterAvailableFeeds,
+  isFeedAvailable
+} from '@/lib/feed-health'
 
 interface NewsItem {
   id: string
@@ -51,6 +54,10 @@ interface CustomFeed {
 }
 
 const NEWS_PER_PAGE = 20
+
+// Batching configuration for feed fetching
+const BATCH_SIZE = 10        // Fetch 10 feeds at a time
+const BATCH_DELAY = 50       // 50ms delay between batches
 
 // Category definitions - imported from @/lib/rss-feeds
 // MAIN_CATEGORIES: ['All', 'News', 'Business', 'Technology', 'Science', 'Sports', 'Entertainment', 'Lifestyle', 'Opinion']
@@ -97,6 +104,16 @@ function cleanDescription(description: string): string {
 
 async function fetchRSSFeed(feed: { name: string; url: string; category: string }): Promise<NewsItem[]> {
   try {
+    // Check if feed is available (not disabled by circuit breaker)
+    const isAvailable = await isFeedAvailable(feed.url)
+    if (!isAvailable) {
+      // Development mode logging only
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[FeedHealth] Skipping disabled feed: ${feed.name}`)
+      }
+      return []
+    }
+
     // Try to get from cache first
     const cacheKey = `rss_${feed.name}`
     const cached = await storage.get<{ data: NewsItem[], timestamp: number }>(cacheKey)
@@ -115,16 +132,46 @@ async function fetchRSSFeed(feed: { name: string; url: string; category: string 
     })
 
     if (!response.ok) {
-      // Log specific error for debugging but don't throw - return empty array
-      const errorText = response.statusText
-      console.warn(`RSS feed ${feed.name} returned ${response.status}: ${errorText}`)
+      // Get detailed error from response if available
+      let errorMessage = response.statusText
+      try {
+        const errorData = await response.json()
+        errorMessage = errorData.error || errorMessage
+      } catch {
+        // If response is not JSON, use status text
+      }
+
+      // Map status codes to user-friendly messages
+      const statusMessages: Record<number, string> = {
+        400: 'Bad Request',
+        404: 'Not Found',
+        422: 'Invalid Feed Format',
+        504: 'Timeout',
+        500: 'Server Error'
+      }
+
+      const message = statusMessages[response.status] || 'Error'
+
+      // Record failure in health tracking
+      await recordFeedFailure(feed.url, `${response.status}: ${errorMessage}`)
+
+      // Development mode logging only
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`RSS feed ${feed.name} returned ${response.status} (${message}): ${errorMessage}`)
+      }
       return []
     }
 
     const result = await response.json()
 
     if (!result.success || !result.data) {
-      console.warn(`Invalid RSS feed response from ${feed.name}`)
+      // Record failure in health tracking
+      await recordFeedFailure(feed.url, result.error || 'Unknown error')
+
+      // Development mode logging only
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`Invalid RSS feed response from ${feed.name}: ${result.error || 'Unknown error'}`)
+      }
       return []
     }
 
@@ -145,9 +192,19 @@ async function fetchRSSFeed(feed: { name: string; url: string; category: string 
     // Cache the results
     await storage.set(cacheKey, { data: news, timestamp: Date.now() })
 
+    // Record success in health tracking
+    await recordFeedSuccess(feed.url)
+
     return news
   } catch (error) {
-    console.warn(`Error fetching RSS feed from ${feed.name}:`, error)
+    // Record failure in health tracking
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    await recordFeedFailure(feed.url, errorMessage)
+
+    // Development mode logging only
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`Error fetching RSS feed from ${feed.name}:`, error)
+    }
     return []
   }
 }
@@ -173,35 +230,53 @@ async function fetchDefaultNewsIncremental(
       ? filterEnabledFeeds(RSS_FEEDS, feedPreferences)
       : RSS_FEEDS
 
+    // Filter out disabled feeds using circuit breaker
+    const { available } = await filterAvailableFeeds(feedsToFetch)
+
     const allNews: NewsItem[] = []
 
-    // Fetch feeds incrementally
-    for (const feed of feedsToFetch) {
-      try {
-        const items = await fetchRSSFeed(feed)
+    // Fetch feeds in batches to reduce server load
+    for (let i = 0; i < available.length; i += BATCH_SIZE) {
+      const batch = available.slice(i, i + BATCH_SIZE)
+
+      // Fetch all feeds in this batch in parallel
+      const batchResults = await Promise.all(
+        batch.map(feed => fetchRSSFeed(feed))
+      )
+
+      // Add results to allNews
+      for (const items of batchResults) {
         allNews.push(...items)
+      }
 
-        // Sort by publication date (newest first)
-        allNews.sort((a, b) =>
-          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-        )
+      // Sort by publication date (newest first)
+      allNews.sort((a, b) =>
+        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+      )
 
-        // Update state with current progress
-        onUpdate(allNews.slice(0, 100))
+      // Update state with current progress
+      onUpdate(allNews.slice(0, 100))
 
-        // Call progress callback if provided
-        if (onProgress) onProgress()
-      } catch (error) {
-        console.error(`Error fetching feed ${feed.name}:`, error)
-        // Still call progress callback on error so counter updates
-        if (onProgress) onProgress()
+      // Call progress callback for each feed in batch
+      if (onProgress) {
+        for (let j = 0; j < batch.length; j++) {
+          onProgress()
+        }
+      }
+
+      // Add delay between batches (except after last batch)
+      if (i + BATCH_SIZE < available.length) {
+        await new Promise(resolve => setTimeout(resolve, BATCH_DELAY))
       }
     }
 
     // Cache the final results
     await storage.set(cacheKey, { data: allNews.slice(0, 100), timestamp: Date.now() })
   } catch (error) {
-    console.error('Error in fetchDefaultNewsIncremental:', error)
+    // Development mode logging only
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error in fetchDefaultNewsIncremental:', error)
+    }
   }
 }
 
@@ -222,35 +297,53 @@ async function fetchCustomNewsIncremental(
       return
     }
 
+    // Filter out disabled feeds using circuit breaker
+    const { available } = await filterAvailableFeeds(customFeeds)
+
     const allNews: NewsItem[] = []
 
-    // Fetch feeds incrementally
-    for (const feed of customFeeds) {
-      try {
-        const items = await fetchRSSFeed(feed)
+    // Fetch feeds in batches to reduce server load
+    for (let i = 0; i < available.length; i += BATCH_SIZE) {
+      const batch = available.slice(i, i + BATCH_SIZE)
+
+      // Fetch all feeds in this batch in parallel
+      const batchResults = await Promise.all(
+        batch.map(feed => fetchRSSFeed(feed))
+      )
+
+      // Add results to allNews
+      for (const items of batchResults) {
         allNews.push(...items)
+      }
 
-        // Sort by publication date (newest first)
-        allNews.sort((a, b) =>
-          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-        )
+      // Sort by publication date (newest first)
+      allNews.sort((a, b) =>
+        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+      )
 
-        // Update state with current progress
-        onUpdate(allNews.slice(0, 100))
+      // Update state with current progress
+      onUpdate(allNews.slice(0, 100))
 
-        // Call progress callback if provided
-        if (onProgress) onProgress()
-      } catch (error) {
-        console.error(`Error fetching feed ${feed.name}:`, error)
-        // Still call progress callback on error so counter updates
-        if (onProgress) onProgress()
+      // Call progress callback for each feed in batch
+      if (onProgress) {
+        for (let j = 0; j < batch.length; j++) {
+          onProgress()
+        }
+      }
+
+      // Add delay between batches (except after last batch)
+      if (i + BATCH_SIZE < available.length) {
+        await new Promise(resolve => setTimeout(resolve, BATCH_DELAY))
       }
     }
 
     // Cache the final results
     await storage.set(cacheKey, { data: allNews.slice(0, 100), timestamp: Date.now() })
   } catch (error) {
-    console.error('Error in fetchCustomNewsIncremental:', error)
+    // Development mode logging only
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error in fetchCustomNewsIncremental:', error)
+    }
   }
 }
 
@@ -328,10 +421,14 @@ async function fetchCustomNews(customFeeds: CustomFeed[]): Promise<NewsItem[]> {
 }
 
 export default function NewsClient({ initialNews }: NewsClientProps) {
+  // Mobile detection for responsive layout
+  const isMobile = useIsMobile()
+
   // Multi-column layout state
   const [activeLayout, setActiveLayout] = useState<ColumnLayout | null>(null)
   const [columnNewsData, setColumnNewsData] = useState<Record<string, NewsItem[]>>({})
   const [columnFilters, setColumnFilters] = useState<Record<string, { search: string }>>({})
+  const [columnPages, setColumnPages] = useState<Record<string, number>>({})
 
   // Legacy state (kept for backward compatibility during transition)
   const [defaultNews, setDefaultNews] = useState<NewsItem[]>([])
@@ -368,6 +465,8 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
 
   // Feed preferences state
   const [feedPreferences, setFeedPreferences] = useState<FeedPreferences | null>(null)
+  // Track whether feed preferences have been loaded to prevent infinite loop
+  const feedPreferencesLoadedRef = useRef(false)
   const [showFeedSettings, setShowFeedSettings] = useState(false)
   const [showColumnSettings, setShowColumnSettings] = useState(false)
 
@@ -377,11 +476,16 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
       if (showLoading) setLoading(true)
       else setIsRefreshing(true)
 
-      // Calculate total feeds to fetch
+      // Calculate total feeds to fetch (after filtering disabled feeds)
       const defaultFeedsToFetch = feedPreferences
         ? filterEnabledFeeds(RSS_FEEDS, feedPreferences)
         : RSS_FEEDS
-      const totalFeeds = defaultFeedsToFetch.length + customFeeds.length
+
+      // Filter available feeds to get accurate count
+      const { available: availableDefault } = await filterAvailableFeeds(defaultFeedsToFetch)
+      const { available: availableCustom } = await filterAvailableFeeds(customFeeds)
+
+      const totalFeeds = availableDefault.length + availableCustom.length
 
       // Initialize loading counter
       setLoadingFeedsCount({ total: totalFeeds, loaded: 0 })
@@ -413,9 +517,13 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
 
       setLastUpdate(new Date())
     } catch (error) {
-      console.error('Failed to fetch news:', error)
+      // Development mode logging only
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to fetch news:', error)
+      }
     } finally {
       setLoading(false)
+      setIsRefreshing(false)
     }
   }, [customFeeds, feedPreferences])
 
@@ -440,6 +548,8 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
       try {
         const prefs = await getFeedPreferences()
         setFeedPreferences(prefs)
+        // Mark as loaded to allow fetchAllNews to use preferences
+        feedPreferencesLoadedRef.current = true
       } catch (error) {
         console.error('Failed to load feed preferences:', error)
       }
@@ -454,13 +564,16 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
         const layout = await getActiveLayout()
         setActiveLayout(layout)
 
-        // Initialize column filters
+        // Initialize column filters and pages
         if (layout) {
           const filters: Record<string, { search: string }> = {}
+          const pages: Record<string, number> = {}
           layout.columns.forEach(col => {
             filters[col.id] = { search: '' }
+            pages[col.id] = 1
           })
           setColumnFilters(filters)
+          setColumnPages(pages)
         }
       } catch (error) {
         console.error('Failed to load column layout:', error)
@@ -472,38 +585,49 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
   // Fetch news for each column based on layout - incremental updates
   useEffect(() => {
     const fetchColumnNews = async () => {
-      if (!activeLayout) return
+      if (!activeLayout || !feedPreferences) return
 
-      const feedsToFetch = filterEnabledFeeds(RSS_FEEDS, feedPreferences || { enabledFeeds: [], blockedFeeds: [], favoriteFeeds: [], hiddenCategories: [], feedColors: {} })
+      const feedsToFetch = filterEnabledFeeds(RSS_FEEDS, feedPreferences)
 
       for (const column of activeLayout.columns) {
         const columnFeeds = getFeedsForColumn(feedsToFetch, customFeeds, column)
 
+        // Filter out disabled feeds using circuit breaker
+        const { available } = await filterAvailableFeeds(columnFeeds)
+
         // Initialize empty array for this column
         setColumnNewsData(prev => ({ ...prev, [column.id]: [] }))
 
-        // Fetch feeds incrementally - update state as each completes
-        for (const feed of columnFeeds) {
-          try {
-            const feedItems = await fetchRSSFeed(feed)
+        const columnItems: NewsItem[] = []
 
-            setColumnNewsData(prev => {
-              const currentItems = prev[column.id] || []
-              const updatedItems = [...currentItems, ...feedItems]
+        // Fetch feeds in batches to reduce server load
+        for (let i = 0; i < available.length; i += BATCH_SIZE) {
+          const batch = available.slice(i, i + BATCH_SIZE)
 
-              // Sort by publication date
-              updatedItems.sort((a, b) =>
-                new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-              )
+          // Fetch all feeds in this batch in parallel
+          const batchResults = await Promise.all(
+            batch.map(feed => fetchRSSFeed(feed))
+          )
 
-              // Keep only top 100
-              return {
-                ...prev,
-                [column.id]: updatedItems.slice(0, 100)
-              }
-            })
-          } catch (error) {
-            console.error(`Error fetching news for feed ${feed.name}:`, error)
+          // Add results to columnItems
+          for (const items of batchResults) {
+            columnItems.push(...items)
+          }
+
+          // Sort by publication date
+          columnItems.sort((a, b) =>
+            new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+          )
+
+          // Update state with current progress
+          setColumnNewsData(prev => ({
+            ...prev,
+            [column.id]: columnItems.slice(0, 100)
+          }))
+
+          // Add delay between batches (except after last batch)
+          if (i + BATCH_SIZE < available.length) {
+            await new Promise(resolve => setTimeout(resolve, BATCH_DELAY))
           }
         }
 
@@ -516,6 +640,8 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
 
   // Initialize with initialNews prop from server-side rendering
   useEffect(() => {
+    // Always fetch from API on mount for latest news
+    // If initialNews is provided, show it immediately while fetching
     if (initialNews && initialNews.length > 0) {
       // Separate default and custom news from initial data
       const defaultFeedNames = new Set(RSS_FEEDS.map(f => f.name))
@@ -526,13 +652,10 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
       setFilteredDefaultNews(defaultNewsData)
       setCustomNews(customNewsData)
       setFilteredCustomNews(customNewsData)
-      setLastUpdate(new Date())
-    } else {
-      // No initial data, fetch from API
-      fetchAllNews(true)
     }
-    // Only run once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    // Always fetch fresh data from API
+    fetchAllNews(true)
   }, [])
 
   // Effect to sync drawer loading with selected news content
@@ -855,6 +978,11 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
   const handleCategoryChange = (category: string) => {
     setDefaultCategory(category)
     setCustomCategory(category)
+  }
+
+  // Handle page change for a specific column
+  const handleColumnPageChange = (columnId: string, page: number) => {
+    setColumnPages(prev => ({ ...prev, [columnId]: page }))
   }
 
   if (isAnimating) {
@@ -1203,12 +1331,14 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
               </div>
             )}
 
-            {/* Dynamic Columns */}
+            {/* Dynamic Columns - Stacks vertically on mobile, grid on desktop */}
             {activeLayout && (
               <div
-                className="flex gap-4 overflow-x-auto"
-                style={{
-                  display: 'grid',
+                className={`gap-4 ${isMobile
+                  ? 'flex flex-col'
+                  : 'grid'
+                  }`}
+                style={isMobile ? {} : {
                   gridTemplateColumns: activeLayout.columns.map(c => `${c.width}%`).join(' ')
                 }}
               >
@@ -1217,16 +1347,20 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
                   .map((column) => {
                     const columnNews = columnNewsData[column.id] || []
                     const searchQuery = columnFilters[column.id]?.search || ''
+                    const currentPage = columnPages[column.id] || 1
 
                     // Filter by search
                     const filteredNews = searchQuery.trim()
                       ? columnNews.filter(item =>
-                          item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.description.toLowerCase().includes(searchQuery.toLowerCase())
-                        )
+                        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        item.description.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
                       : columnNews
 
                     const totalPages = Math.ceil(filteredNews.length / NEWS_PER_PAGE)
+                    const startIndex = (currentPage - 1) * NEWS_PER_PAGE
+                    const endIndex = startIndex + NEWS_PER_PAGE
+                    const paginatedNews = filteredNews.slice(startIndex, endIndex)
 
                     return (
                       <div
@@ -1264,12 +1398,14 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
                                 type="text"
                                 placeholder={`SEARCH ${column.title.toUpperCase()}...`}
                                 value={searchQuery}
-                                onChange={(e) =>
+                                onChange={(e) => {
                                   setColumnFilters(prev => ({
                                     ...prev,
                                     [column.id]: { search: e.target.value }
                                   }))
-                                }
+                                  // Reset to page 1 when search changes
+                                  setColumnPages(prev => ({ ...prev, [column.id]: 1 }))
+                                }}
                                 className={`border-2 rounded-none px-3 py-2 focus-visible:ring-0 font-mono text-xs ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-black text-black'}`}
                               />
                             </div>
@@ -1283,7 +1419,7 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
                                   </p>
                                 </div>
                               ) : (
-                                filteredNews.slice(0, NEWS_PER_PAGE).map((item) => (
+                                paginatedNews.map((item) => (
                                   <article
                                     key={item.id}
                                     className={`py-3 px-3 border-b cursor-pointer hover:bg-black hover:text-white transition-all ${darkMode ? 'border-gray-700' : 'border-black'}`}
@@ -1292,8 +1428,7 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
                                     <div className="space-y-2">
                                       <div className="flex items-center justify-between">
                                         <span
-                                          className="text-xs font-bold font-mono uppercase"
-                                          style={{ color: feedPreferences ? getFeedColor(item.source, item.category, feedPreferences) : (darkMode ? '#9ca3af' : '#6b7280') }}
+                                          className="text-xs font-bold font-mono uppercase text-muted-foreground"
                                         >
                                           [{item.category}]
                                         </span>
@@ -1316,6 +1451,37 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
                                 ))
                               )}
                             </div>
+
+                            {/* Pagination Controls */}
+                            {totalPages > 1 && (
+                              <div className={`mt-4 pt-3 border-t-2 flex items-center justify-between ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                                <span className={`text-xs font-mono ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                  Page {currentPage} of {totalPages}
+                                </span>
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={() => handleColumnPageChange(column.id, currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                    className={`p-1 border-2 transition-all ${currentPage === 1
+                                      ? `opacity-50 cursor-not-allowed ${darkMode ? 'border-gray-700 text-gray-600' : 'border-gray-300 text-gray-400'}`
+                                      : `${darkMode ? 'border-gray-600 text-white hover:bg-gray-700' : 'border-black text-black hover:bg-gray-200'}`
+                                      }`}
+                                  >
+                                    <ChevronLeft className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleColumnPageChange(column.id, currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                    className={`p-1 border-2 transition-all ${currentPage === totalPages
+                                      ? `opacity-50 cursor-not-allowed ${darkMode ? 'border-gray-700 text-gray-600' : 'border-gray-300 text-gray-400'}`
+                                      : `${darkMode ? 'border-gray-600 text-white hover:bg-gray-700' : 'border-black text-black hover:bg-gray-200'}`
+                                      }`}
+                                  >
+                                    <ChevronRight className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </>
                         )}
                       </div>
@@ -1391,8 +1557,7 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
               <div className={`sticky top-0 border-b-4 border-double py-4 mb-8 flex items-center justify-between retro-drawer-header ${darkMode ? 'bg-gray-900 border-gray-600' : 'bg-white border-black'}`}>
                 <div className="flex-1 min-w-0 mr-4 retro-meta-info">
                   <span
-                    className="text-xs font-bold font-mono uppercase tracking-widest block mb-1 retro-category"
-                    style={{ color: feedPreferences ? getFeedColor(selectedNews.source, selectedNews.category, feedPreferences) : (darkMode ? '#9ca3af' : '#6b7280') }}
+                    className="text-xs font-bold font-mono uppercase tracking-widest block mb-1 retro-category text-muted-foreground"
                   >
                     [{selectedNews.category}]
                   </span>
