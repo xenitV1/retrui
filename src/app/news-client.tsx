@@ -474,7 +474,7 @@ export default function NewsClient({ initialNews }: NewsClientProps) {
     const fetchColumnNews = async () => {
       if (!activeLayout) return
 
-      const feedsToFetch = filterEnabledFeeds(RSS_FEEDS, feedPreferences || { enabledFeeds: [], blockedFeeds: [], favoriteFeeds: [], hiddenCategories: [] })
+      const feedsToFetch = filterEnabledFeeds(RSS_FEEDS, feedPreferences || { enabledFeeds: [], blockedFeeds: [], favoriteFeeds: [], hiddenCategories: [], feedColors: {} })
 
       for (const column of activeLayout.columns) {
         const columnFeeds = getFeedsForColumn(feedsToFetch, customFeeds, column)
