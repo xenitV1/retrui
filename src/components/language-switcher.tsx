@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { locales, localeNames, type Locale } from '@/i18n/config'
 import { Globe } from 'lucide-react'
 import {
@@ -21,31 +21,18 @@ export function LanguageSwitcher({ currentLocale, darkMode = false }: LanguageSw
     const router = useRouter()
     const pathname = usePathname()
 
-    console.log('🌐 [LanguageSwitcher] Render - currentLocale:', currentLocale, 'pathname:', pathname)
-
     const switchLocale = useCallback((newLocale: Locale) => {
-        console.log('🔄 [LanguageSwitcher] switchLocale ÇAĞRILDI')
-        console.log('  └─ Mevcut locale:', currentLocale)
-        console.log('  └─ Yeni locale:', newLocale)
-        console.log('  └─ Mevcut pathname:', pathname)
+        if (newLocale === currentLocale) return
 
         // Replace current locale in pathname with new locale
         const segments = pathname.split('/')
-        const oldLocale = segments[1]
         segments[1] = newLocale
         const newPath = segments.join('/')
 
-        console.log('  └─ Eski path segmenti:', oldLocale)
-        console.log('  └─ Yeni path segmenti:', newLocale)
-        console.log('  └─ Oluşturulan yeni path:', newPath)
-
         // Set cookie for persistence
         document.cookie = `NEXT_LOCALE=${newLocale};path=/;max-age=31536000`
-        console.log('  └─ Cookie ayarlandı: NEXT_LOCALE=', newLocale)
 
-        console.log('  └─ router.push çağrılıyor:', newPath)
         router.push(newPath)
-        console.log('✅ [LanguageSwitcher] switchLocale TAMAMLANDI')
     }, [currentLocale, pathname])
 
     return (

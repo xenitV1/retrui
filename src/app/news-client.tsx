@@ -233,53 +233,46 @@ async function fetchDefaultNewsIncremental(
   feedPreferences: FeedPreferences | undefined,
   onUpdate: (items: NewsItem[]) => void,
   onProgress?: () => void,
-  language?: string
+  language?: string,
+  signal?: AbortSignal
 ): Promise<void> {
-  console.log('  📡 [fetchDefaultNewsIncremental] ÇAĞRILDI, language:', language)
-
   try {
+    // Check if aborted
+    if (signal?.aborted) return
+
     // Cache key depends ONLY on RSS language filter (not UI locale)
-    // This allows sidebar language changes to fetch new content
     const cacheKey = feedPreferences
       ? `default_news_cache_${JSON.stringify(feedPreferences)}_${language || 'all'}`
       : `default_news_cache_${language || 'all'}`
-    console.log('  🔑 [Cache Key] Calculated key:', cacheKey)
-    console.log('  🔑 [Cache Key] feedPreferences:', feedPreferences ? 'SET' : 'UNDEFINED')
-    console.log('  🔑 [Cache Key] language param:', language || 'all')
+
     const cached = await storage.get<{ data: NewsItem[], timestamp: number }>(cacheKey)
 
     if (cached && Date.now() - cached.timestamp < 2 * 60 * 1000) { // 2 minutes cache
-      console.log('     └─ Cache hit! Using cached data')
       onUpdate(cached.data)
       return
     }
-    console.log('     └─ Cache miss, fetching from RSS...')
 
     // Filter feeds based on user preferences
     let feedsToFetch = feedPreferences
       ? filterEnabledFeeds(RSS_FEEDS, feedPreferences)
       : RSS_FEEDS
 
-    console.log('     └─ FeedPreferences sonrası feedsToFetch:', feedsToFetch.length)
-
     // Filter by language if specified
     if (language && language !== 'All') {
-      const beforeFilter = feedsToFetch.length
       feedsToFetch = feedsToFetch.filter(feed => feed.language === language)
-      console.log('     └─ Language filtre applied:', language, `(${beforeFilter} → ${feedsToFetch.length})`)
     }
 
     // Filter out disabled feeds using circuit breaker
     const { available } = await filterAvailableFeeds(feedsToFetch)
 
-    console.log('     └─ Circuit breaker sonrası available:', available.length)
-
     const allNews: NewsItem[] = []
 
     // Fetch feeds in batches to reduce server load
     for (let i = 0; i < available.length; i += BATCH_SIZE) {
+      // Check if aborted before each batch
+      if (signal?.aborted) return
+
       const batch = available.slice(i, i + BATCH_SIZE)
-      console.log(`     └─ Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${batch.length} feeds`)
 
       // Fetch all feeds in this batch in parallel
       const batchResults = await Promise.all(
@@ -312,13 +305,14 @@ async function fetchDefaultNewsIncremental(
       }
     }
 
-    console.log('     └─ Toplam news items fetched:', allNews.length)
+    // Check if aborted before caching
+    if (signal?.aborted) return
 
     // Cache the final results
     await storage.set(cacheKey, { data: allNews.slice(0, 100), timestamp: Date.now() })
-    console.log('     └─ Cached with key:', cacheKey)
   } catch (error) {
-    // Development mode logging only
+    // Only log if not aborted
+    if (signal?.aborted) return
     if (process.env.NODE_ENV === 'development') {
       console.error('Error in fetchDefaultNewsIncremental:', error)
     }
@@ -329,11 +323,15 @@ async function fetchDefaultNewsIncremental(
 async function fetchCustomNewsIncremental(
   customFeeds: CustomFeed[],
   onUpdate: (items: NewsItem[]) => void,
-  onProgress?: () => void
+  onProgress?: () => void,
+  signal?: AbortSignal
 ): Promise<void> {
   if (customFeeds.length === 0) return
 
   try {
+    // Check if aborted
+    if (signal?.aborted) return
+
     const cacheKey = 'custom_news_cache'
     const cached = await storage.get<{ data: NewsItem[], timestamp: number }>(cacheKey)
 
@@ -349,6 +347,9 @@ async function fetchCustomNewsIncremental(
 
     // Fetch feeds in batches to reduce server load
     for (let i = 0; i < available.length; i += BATCH_SIZE) {
+      // Check if aborted before each batch
+      if (signal?.aborted) return
+
       const batch = available.slice(i, i + BATCH_SIZE)
 
       // Fetch all feeds in this batch in parallel
@@ -382,10 +383,14 @@ async function fetchCustomNewsIncremental(
       }
     }
 
+    // Check if aborted before caching
+    if (signal?.aborted) return
+
     // Cache the final results
     await storage.set(cacheKey, { data: allNews.slice(0, 100), timestamp: Date.now() })
   } catch (error) {
-    // Development mode logging only
+    // Only log if not aborted
+    if (signal?.aborted) return
     if (process.env.NODE_ENV === 'development') {
       console.error('Error in fetchCustomNewsIncremental:', error)
     }
@@ -486,16 +491,10 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
   const [defaultCurrentPage, setDefaultCurrentPage] = useState(1)
   const [defaultLanguage, setDefaultLanguage] = useState<string>(currentLocale)
 
-  // Wrapper for setDefaultLanguage with console logging
+  // Wrapper for setDefaultLanguage
   const handleLanguageChange = (newLanguage: string) => {
-    console.log('📰 [Sol Menü Language] Dil değişikliği ÇAĞRILDI')
-    console.log('  └─ Eski dil:', defaultLanguage)
-    console.log('  └─ Yeni dil:', newLanguage)
-    console.log('  └─ RSS feed filtreleme yapılacak ve yeniden yüklenecek')
-
+    if (newLanguage === defaultLanguage) return
     setDefaultLanguage(newLanguage)
-
-    console.log('  └─ State güncellendi, fetchAllNews tetiklenmeli (defaultLanguage dependency)')
   }
 
   // RIGHT COLUMN (Custom Feeds)
@@ -527,8 +526,8 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
   const [feedPreferences, setFeedPreferences] = useState<FeedPreferences | null>(null)
   // Track whether feed preferences have been loaded to prevent infinite loop
   const feedPreferencesLoadedRef = useRef(false)
-  // Race condition prevention: track current fetch operation ID
-  const fetchIdRef = useRef(0)
+  // AbortController for cancelling pending fetches
+  const abortControllerRef = useRef<AbortController | null>(null)
   const [showFeedSettings, setShowFeedSettings] = useState(false)
   const [showColumnSettings, setShowColumnSettings] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
@@ -540,14 +539,17 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
   // User can change RSS language from sidebar menu without affecting UI language
   // Initial value is set from currentLocale in useState above, but subsequent changes are user-driven
 
-  // Fetch all news with useCallback - incremental updates
+  // Fetch all news with useCallback - uses AbortController to cancel previous fetches
   const fetchAllNews = useCallback(async (showLoading = true) => {
-    // Increment fetch ID to cancel previous pending fetches (race condition prevention)
-    const currentFetchId = ++fetchIdRef.current
-    console.log('🔄 [fetchAllNews] ÇAĞRILDI (fetchId:', currentFetchId, ')')
-    console.log('  └─ showLoading:', showLoading)
-    console.log('  └─ defaultLanguage:', defaultLanguage)
-    console.log('  └─ customFeeds count:', customFeeds.length)
+    // Cancel any pending fetch
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+
+    // Create new AbortController for this fetch
+    const abortController = new AbortController()
+    abortControllerRef.current = abortController
+    const signal = abortController.signal
 
     try {
       if (showLoading) setLoading(true)
@@ -558,26 +560,14 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
         ? filterEnabledFeeds(RSS_FEEDS, feedPreferences)
         : RSS_FEEDS
 
-      console.log('  └─ Toplam RSS_FEEDS:', RSS_FEEDS.length)
-      console.log('  └─ FeedPreferences sonrası:', defaultFeedsToFetch.length)
-
       // Filter by language if specified
       if (defaultLanguage !== 'All') {
-        const beforeFilter = defaultFeedsToFetch.length
         defaultFeedsToFetch = defaultFeedsToFetch.filter(feed => feed.language === defaultLanguage)
-        console.log('  └─ Language filtre applied:', defaultLanguage)
-        console.log('     └─ Öncesi:', beforeFilter, '→ Sonrası:', defaultFeedsToFetch.length)
-      } else {
-        console.log('  └─ Language filtre: All (filtre yok)')
       }
 
       // Filter available feeds to get accurate count
       const { available: availableDefault } = await filterAvailableFeeds(defaultFeedsToFetch)
       const { available: availableCustom } = await filterAvailableFeeds(customFeeds)
-
-      console.log('  └─ Circuit breaker sonrası:')
-      console.log('     └─ Default feeds:', availableDefault.length)
-      console.log('     └─ Custom feeds:', availableCustom.length)
 
       const totalFeeds = availableDefault.length + availableCustom.length
 
@@ -590,8 +580,6 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
       setCustomNews([])
       setFilteredCustomNews([])
 
-      console.log('  └─ Fetch başlıyor...')
-
       // Create a counter callback for progress updates
       let loadedCount = 0
       const updateProgress = () => {
@@ -602,36 +590,33 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
       // Fetch default and custom news incrementally in parallel
       await Promise.all([
         fetchDefaultNewsIncremental(feedPreferences || undefined, (items) => {
-          // Only update if this is still the current fetch (race condition check)
-          if (fetchIdRef.current !== currentFetchId) {
-            console.log('  ⚠️ [fetchId:', currentFetchId, '] Stale fetch, ignoring results')
-            return
-          }
           setDefaultNews(items)
           setFilteredDefaultNews(items)
-          console.log('  └─ [fetchId:', currentFetchId, '] Default news güncellendi, items count:', items.length)
-        }, updateProgress, defaultLanguage),
+        }, updateProgress, defaultLanguage, signal),
         fetchCustomNewsIncremental(customFeeds, (items) => {
-          // Only update if this is still the current fetch (race condition check)
-          if (fetchIdRef.current !== currentFetchId) {
-            return
-          }
           setCustomNews(items)
           setFilteredCustomNews(items)
-          console.log('  └─ [fetchId:', currentFetchId, '] Custom news güncellendi, items count:', items.length)
-        }, updateProgress)
+        }, updateProgress, signal)
       ])
 
-      setLastUpdate(new Date())
-      console.log('✅ [fetchAllNews] TAMAMLANDI')
+      // Only update if not aborted
+      if (!signal.aborted) {
+        setLastUpdate(new Date())
+      }
     } catch (error) {
-      // Development mode logging only
+      // Ignore abort errors
+      if (error instanceof Error && error.name === 'AbortError') {
+        return
+      }
       if (process.env.NODE_ENV === 'development') {
         console.error('Failed to fetch news:', error)
       }
     } finally {
-      setLoading(false)
-      setIsRefreshing(false)
+      // Only clear loading state if not aborted
+      if (!signal.aborted) {
+        setLoading(false)
+        setIsRefreshing(false)
+      }
     }
   }, [customFeeds, feedPreferences, defaultLanguage])
 
@@ -766,9 +751,13 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
       return
     }
 
-    console.log('📰 [Language Change] defaultLanguage değişti, fetch tetikleniyor:', defaultLanguage)
-    fetchAllNews(false) // Use false to avoid full loading indicator
-  }, [defaultLanguage, fetchAllNews])
+    const timeoutId = setTimeout(() => {
+      fetchAllNews(false)
+    }, 100) // Small debounce to prevent rapid calls
+
+    return () => clearTimeout(timeoutId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultLanguage])
 
   // Initialize with initialNews prop from server-side rendering
   useEffect(() => {
@@ -821,7 +810,8 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
     }, 60000)
 
     return () => clearInterval(refreshInterval)
-  }, [fetchAllNews])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Apply dark mode class to document
   useEffect(() => {
