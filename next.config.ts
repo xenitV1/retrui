@@ -2,13 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  // TypeScript errors now fail build (previously ignored)
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
-  reactStrictMode: false,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // React Strict Mode helps detect side effects and unsafe lifecycle
+  reactStrictMode: true,
   // Ensure packages work correctly on Vercel serverless
   serverExternalPackages: ['@extractus/article-extractor'],
 };
