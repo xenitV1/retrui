@@ -64,7 +64,7 @@
     "fiveDayRetention": "5-Day Retention",
     "fiveDayRetentionDesc": "We keep news for 5 days only. Older articles are automatically cleaned up to ensure you always see the most current news.",
     "realTimeUpdates": "Real-Time Updates",
-    "realTimeUpdatesDesc": "News feeds are synchronized every 15 minutes via automated cron jobs, ensuring you have access to the latest headlines.",
+    "realTimeUpdatesDesc": "News feeds are synchronized every 8 hours via automated cron jobs, ensuring you have access to the latest headlines.",
     "autoCleanup": "Automatic Cleanup",
     "autoCleanupDesc": "Articles older than 5 days are automatically removed from our database to maintain optimal performance and freshness.",
     "clientCache": "Client-side Caching (IndexedDB)",

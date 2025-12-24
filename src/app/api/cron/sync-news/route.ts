@@ -184,7 +184,13 @@ function generateSlug(title: string, url: string): string {
         .replace(/[\s_-]+/g, '-')
         .replace(/^-+|-+$/g, '')
 
-    // Add part of URL hash to ensure uniqueness
-    const hash = Math.random().toString(36).substring(2, 7)
-    return `${base}-${hash}`
+    // Use a simple hash of the URL to ensure same item always gets same slug
+    let hash = 0
+    for (let i = 0; i < url.length; i++) {
+        hash = ((hash << 5) - hash) + url.charCodeAt(i)
+        hash |= 0 // Convert to 32bit integer
+    }
+    const hashStr = Math.abs(hash).toString(36).substring(0, 5)
+    return `${base}-${hashStr}`
 }
+

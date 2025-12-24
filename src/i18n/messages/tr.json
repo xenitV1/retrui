@@ -64,7 +64,7 @@
     "fiveDayRetention": "5 Günlük Saklama",
     "fiveDayRetentionDesc": "Haberleri yalnızca 5 gün tutuyoruz. Eski makaleler, her zaman en güncel haberleri görmenizi sağlamak için otomatik olarak temizlenir.",
     "realTimeUpdates": "Gerçek Zamanlı Güncellemeler",
-    "realTimeUpdatesDesc": "Haber akışları, otomatik cron işleri aracılığıyla her 15 dakikada bir senkronize edilir ve en son başlıklara erişiminizi sağlar.",
+    "realTimeUpdatesDesc": "Haber akışları, otomatik cron işleri aracılığıyla her 8 saatte bir senkronize edilir ve en son başlıklara erişiminizi sağlar.",
     "autoCleanup": "Otomatik Temizlik",
     "autoCleanupDesc": "5 günden eski makaleler, optimum performans ve tazelik sağlamak için veritabanımızdan otomatik olarak kaldırılır.",
     "clientCache": "İstemci Tarafı Önbellek (IndexedDB)",
