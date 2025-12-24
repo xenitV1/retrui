@@ -141,35 +141,52 @@ async function fetchSingleFeed(feed: { name: string; url: string; category: stri
     }
 }
 
+import prisma from './prisma'
+
+// ... existing interfaces ...
+
 /**
  * Fetch initial news for server-side rendering
- * Uses English feeds for all locales for SEO consistency
- * 
- * @param _locale - Current locale (unused, kept for API compatibility)
- * @returns Array of news items for initial render
+ * Now pulls from DB for better SEO and performance
  */
-export async function fetchInitialNews(_locale: Locale): Promise<ServerNewsItem[]> {
+export async function fetchInitialNews(locale: Locale): Promise<ServerNewsItem[]> {
     try {
-        // Use English feeds for all locales
+        // 1. Try to fetch from DB first (Last 24-48 hours news)
+        const newsFromDb = await prisma.news.findMany({
+            where: {
+                language: locale === 'tr' ? 'tr' : 'en', // Match locale
+            },
+            orderBy: { publishedAt: 'desc' },
+            take: 30
+        })
+
+        if (newsFromDb.length > 0) {
+            console.log(`[Server] Found ${newsFromDb.length} news in DB for locale ${locale}`)
+            return newsFromDb.map(news => ({
+                id: news.id,
+                title: news.title,
+                slug: news.slug, // Added slug
+                description: news.description || '',
+                content: news.content || '',
+                author: news.author || news.source,
+                publishedAt: news.publishedAt.toISOString(),
+                source: news.source,
+                category: news.category,
+                url: news.url
+            }))
+        }
+
+        // 2. Fallback to RSS if DB is empty
+        console.log(`[Server] DB empty for ${locale}, falling back to RSS feeds...`)
         const feeds = TOP_FEEDS
-
-        // Fetch all feeds in parallel with individual error handling
-        const results = await Promise.all(
-            feeds.map(feed => fetchSingleFeed(feed))
-        )
-
-        // Flatten and sort by date (newest first)
+        const results = await Promise.all(feeds.map(feed => fetchSingleFeed(feed)))
         const allNews = results
             .flat()
-            .sort((a, b) =>
-                new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-            )
+            .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
 
-        // Return top 25 news items for initial render
         return allNews.slice(0, 25)
     } catch (error) {
         console.error('[Server] Failed to fetch initial news:', error)
-        // Return empty array on error - client will fetch fresh data
         return []
     }
 }

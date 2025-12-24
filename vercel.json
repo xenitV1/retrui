@@ -1,12 +1,30 @@
 {
-    "functions": {
-        "app/api/fetch-content/route.ts": {
-            "memory": 1024,
-            "maxDuration": 30
-        },
-        "app/api/fetch-rss/route.ts": {
-            "memory": 512,
-            "maxDuration": 10
-        }
+  "functions": {
+    "app/api/fetch-content/route.ts": {
+      "memory": 1024,
+      "maxDuration": 30
+    },
+    "app/api/fetch-rss/route.ts": {
+      "memory": 512,
+      "maxDuration": 10
+    },
+    "app/api/cron/sync-news/route.ts": {
+      "memory": 1024,
+      "maxDuration": 60
     }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/sync-news?batch=0",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/sync-news?batch=1",
+      "schedule": "5-59/15 * * * *"
+    },
+    {
+      "path": "/api/cron/sync-news?batch=2",
+      "schedule": "10-59/15 * * * *"
+    }
+  ]
 }
