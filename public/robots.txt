@@ -15,4 +15,3 @@ Allow: /
 
 # Sitemap
 Sitemap: https://retrui.vercel.app/sitemap.xml
-Sitemap: https://retrui.vercel.app/news-sitemap.xml
