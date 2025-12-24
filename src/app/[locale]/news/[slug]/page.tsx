@@ -17,9 +17,35 @@ interface Props {
  */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const news = await prisma.news.findUnique({
+  let news = await prisma.news.findUnique({
     where: { slug }
   })
+
+  // Fallback: If not found by exact slug, try finding by matching the title part of the slug
+  if (!news) {
+    // Slug format is: title-slug-hash (e.g., "some-title-ab123")
+    // Retrieve the base part (title-slug) by removing the last segment
+    const slugParts = slug.split('-')
+    if (slugParts.length > 1) {
+      // Remove the hash part
+      slugParts.pop()
+      const titleSlug = slugParts.join('-')
+
+      // Try to find a news item that starts with this title slug
+      // This is a "fuzzy" match to recover from mismatched hashes
+      const potentialMatch = await prisma.news.findFirst({
+        where: {
+          slug: {
+            startsWith: titleSlug
+          }
+        }
+      })
+
+      if (potentialMatch) {
+        news = potentialMatch
+      }
+    }
+  }
 
   if (!news) return { title: 'News Not Found' }
 
@@ -49,9 +75,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function NewsDetailPage({ params }: Props) {
   const { slug, locale } = await params
 
-  const news = await prisma.news.findUnique({
+  let news = await prisma.news.findUnique({
     where: { slug }
   })
+
+  // Fallback: If not found by exact slug, try finding by matching the title part of the slug
+  if (!news) {
+    const slugParts = slug.split('-')
+    if (slugParts.length > 1) {
+      slugParts.pop()
+      const titleSlug = slugParts.join('-')
+
+      const potentialMatch = await prisma.news.findFirst({
+        where: {
+          slug: {
+            startsWith: titleSlug
+          }
+        }
+      })
+
+      if (potentialMatch) {
+        news = potentialMatch
+      }
+    }
+  }
 
   if (!news) {
     notFound()
