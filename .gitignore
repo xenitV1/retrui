@@ -27,8 +27,9 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env*.local
 .env
-.env.local
+
 # vercel
 .vercel
 
@@ -57,6 +58,3 @@ logs
 # Temporary files
 tmp
 temp
-
-# Rust
-rust-api/target/

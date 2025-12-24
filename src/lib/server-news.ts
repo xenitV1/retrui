@@ -1,16 +1,17 @@
 /**
  * Server-Side News Fetching for SEO
  * 
- * This module fetches news from Rust API on the server side
+ * This module fetches news from top RSS feeds on the server side
  * to ensure Google can crawl and index the content.
  * 
  * Features:
- * - Fetches from Rust backend API
+ * - Fetches from top 10 popular feeds per language
  * - Returns 20-30 news items for initial render
  * - Uses ISR (Incremental Static Regeneration) for caching
  * - Fallback to empty array on error (graceful degradation)
  */
 
+import Parser from 'rss-parser'
 import { type Locale } from '@/i18n/config'
 
 // News item interface matching client-side structure
@@ -26,27 +27,56 @@ export interface ServerNewsItem {
     url: string
 }
 
-// Top feeds for SEO - these will be fetched via Rust API
+// Top English feeds from all categories - used for SEO
+// Only reliable feeds that respond quickly (tested working)
 const TOP_FEEDS: Array<{ name: string; url: string; category: string }> = [
-    // Technology
+    // Technology (7 reliable feeds)
     { name: 'TechCrunch', url: 'https://techcrunch.com/feed/', category: 'Technology' },
     { name: 'The Verge', url: 'https://www.theverge.com/rss/index.xml', category: 'Technology' },
     { name: 'BBC Technology', url: 'https://feeds.bbci.co.uk/news/technology/rss.xml', category: 'Technology' },
     { name: 'Wired', url: 'https://www.wired.com/feed/rss', category: 'Technology' },
     { name: 'Ars Technica', url: 'https://feeds.arstechnica.com/arstechnica/index', category: 'Technology' },
+    { name: 'CNET', url: 'https://www.cnet.com/rss/news/', category: 'Technology' },
+    { name: 'ZDNet', url: 'https://www.zdnet.com/news/rss.xml', category: 'Technology' },
 
-    // News
+    // News (6 reliable feeds)
     { name: 'BBC World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml', category: 'News' },
     { name: 'Al Jazeera English', url: 'https://www.aljazeera.com/xml/rss/all.xml', category: 'News' },
+    { name: 'France 24 World', url: 'https://www.france24.com/en/rss', category: 'News' },
+    { name: 'Sky News', url: 'https://feeds.skynews.com/feeds/rss/world.xml', category: 'News' },
+    { name: 'Independent UK', url: 'https://www.independent.co.uk/news/world/rss', category: 'News' },
     { name: 'NPR', url: 'https://feeds.npr.org/1001/rss.xml', category: 'News' },
 
-    // Business
+    // Business & Finance (5 reliable feeds)
     { name: 'Bloomberg', url: 'https://feeds.bloomberg.com/markets/news.rss', category: 'Business' },
+    { name: 'CNBC', url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html', category: 'Business' },
+    { name: 'MarketWatch', url: 'https://feeds.marketwatch.com/marketwatch/topstories', category: 'Business' },
     { name: 'Forbes', url: 'https://www.forbes.com/business/feed/', category: 'Business' },
+    { name: 'CoinDesk', url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', category: 'Business' },
+
+    // Science (3 reliable feeds)
+    { name: 'ScienceDaily', url: 'https://www.sciencedaily.com/rss/all.xml', category: 'Science' },
+    { name: 'Phys.org', url: 'https://phys.org/rss-feed/', category: 'Science' },
+    { name: 'Ars Technica Science', url: 'https://feeds.arstechnica.com/arstechnica/science', category: 'Science' },
+
+    // Entertainment (3 reliable feeds)
+    { name: 'Variety', url: 'https://variety.com/feed/', category: 'Entertainment' },
+    { name: 'Rolling Stone', url: 'https://www.rollingstone.com/feed', category: 'Entertainment' },
+    { name: 'Deadline', url: 'https://deadline.com/feed/', category: 'Entertainment' },
 ]
 
-// Rust API URL (internal during build, or localhost for dev)
-const RUST_API_URL = process.env.RUST_API_URL || 'http://localhost:8080'
+// Parser configuration with timeout
+const parser = new Parser({
+    customFields: {
+        item: ['creator', 'author']
+    },
+    timeout: 10000, // 10 second timeout
+    maxRedirects: 3,
+    headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Retrui/1.0; +https://retrui.vercel.app)',
+        'Accept': 'application/rss+xml, application/xml, text/xml, */*'
+    }
+})
 
 /**
  * Generate unique ID for news item
@@ -72,56 +102,33 @@ function cleanDescription(description: string): string {
 }
 
 /**
- * Fetch a single RSS feed via Rust API
+ * Fetch a single RSS feed with error handling
  */
 async function fetchSingleFeed(feed: { name: string; url: string; category: string }): Promise<ServerNewsItem[]> {
     try {
-        const response = await fetch(`${RUST_API_URL}/api/fetch-rss`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ url: feed.url }),
-            // 15 second timeout for server-side fetching
-            signal: AbortSignal.timeout(15000),
-        })
+        const result = await parser.parseURL(feed.url)
 
-        if (!response.ok) {
-            console.error(`[Server] Rust API error for ${feed.name}: ${response.status}`)
-            return []
-        }
-
-        const result = await response.json()
-
-        if (!result.success || !result.data?.items) {
+        if (!result || !result.items) {
             return []
         }
 
         // Get items from last 24 hours only
         const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000)
 
-        return result.data.items
+        return result.items
             .slice(0, 5) // Max 5 items per feed for server-side
-            .map((item: {
-                title?: string
-                content_snippet?: string
-                content?: string
-                creator?: string
-                author?: string
-                pub_date?: string
-                link?: string
-            }) => ({
+            .map((item) => ({
                 id: generateId(),
                 title: item.title || 'Untitled',
-                description: cleanDescription(item.content_snippet || item.content || ''),
-                content: cleanDescription(item.content || item.content_snippet || ''),
+                description: cleanDescription(item.contentSnippet || item.content || ''),
+                content: cleanDescription(item.content || item.contentSnippet || ''),
                 author: (item.creator || item.author || feed.name) as string,
-                publishedAt: item.pub_date || new Date().toISOString(),
+                publishedAt: item.pubDate || new Date().toISOString(),
                 source: feed.name,
                 category: feed.category,
                 url: item.link || '#'
             }))
-            .filter((item: ServerNewsItem) => {
+            .filter(item => {
                 const publishedTime = new Date(item.publishedAt).getTime()
                 // Include if date parsing fails (fallback)
                 if (isNaN(publishedTime)) return true
@@ -136,16 +143,19 @@ async function fetchSingleFeed(feed: { name: string; url: string; category: stri
 
 /**
  * Fetch initial news for server-side rendering
- * Uses Rust API for all feed fetching
+ * Uses English feeds for all locales for SEO consistency
  * 
  * @param _locale - Current locale (unused, kept for API compatibility)
  * @returns Array of news items for initial render
  */
 export async function fetchInitialNews(_locale: Locale): Promise<ServerNewsItem[]> {
     try {
-        // Fetch all feeds in parallel via Rust API
+        // Use English feeds for all locales
+        const feeds = TOP_FEEDS
+
+        // Fetch all feeds in parallel with individual error handling
         const results = await Promise.all(
-            TOP_FEEDS.map(feed => fetchSingleFeed(feed))
+            feeds.map(feed => fetchSingleFeed(feed))
         )
 
         // Flatten and sort by date (newest first)

@@ -44,23 +44,3 @@ npm run build
 ---
 
 *For complete guidelines, see [AGENTS.md](./AGENTS.md)*
-
----
-
-## Rust API Development
-
-```bash
-# Start Rust API (Terminal 1)
-cd rust-api
-cargo run
-
-# Start Next.js (Terminal 2)
-npm run dev
-
-# Test Rust API health
-curl http://localhost:8080/health
-
-# Run Rust tests
-cd rust-api
-cargo test
-```

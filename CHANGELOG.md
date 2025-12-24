@@ -5,34 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.0] - 2025-12-24
-
-### Added
-- **Rust API Backend** - High-performance Rust backend using Axum framework
-  - `POST /api/fetch-rss` - RSS feed parsing with retry logic
-  - `POST /api/fetch-content` - Article content extraction
-  - `GET /health` - Health check endpoint
-- **SSRF Protection** - Comprehensive security against internal resource access
-- **Connection Pooling** - Optimized HTTP client performance
-- **Exponential Backoff** - Progressive timeout retry strategy (15s → 30s → 45s → 60s)
-
-### Changed
-- Next.js now proxies API requests to Rust backend via `next.config.ts` rewrites
-- RSS parsing moved from `rss-parser` (Node.js) to `feed-rs` (Rust)
-- Content extraction moved from `@extractus/article-extractor` to Rust `readability`
-
-### Performance Improvements
-| Metric | Before (Node.js) | After (Rust) | Improvement |
-|--------|------------------|--------------|-------------|
-| Cold Start | ~500ms | ~5ms | 100x faster |
-| Memory | ~150MB | ~10MB | 15x less |
-| p50 Latency | ~200ms | ~50ms | 4x faster |
-| Throughput | ~50 req/s | ~500 req/s | 10x more |
-
-### Environment Variables
-- Added `RUST_API_URL` for production Rust API endpoint
-- Added `ALLOWED_ORIGINS` for Rust CORS configuration
-
 ## [0.1.1] - 2025-12-23
 
 ### Added
