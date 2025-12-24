@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import { type Locale } from '@/i18n/config'
 import { NewsListSchema } from '@/components/news-schema'
+import { ShareButtons } from '@/components/share-buttons'
 
 interface Props {
   params: Promise<{
@@ -137,16 +138,19 @@ export default async function NewsDetailPage({ params }: Props) {
               )}
             </div>
 
-            {/* Read Original */}
+            {/* Share & Read Original */}
             <div className="mt-8 pt-6 border-t-2 border-gray-200">
-              <a
-                href={news.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block px-6 py-3 bg-black text-white font-mono font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors"
-              >
-                Read Original Article →
-              </a>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <ShareButtons url={`/${locale}/news/${news.slug}`} title={news.title} />
+                <a
+                  href={news.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block px-6 py-3 bg-black text-white font-mono font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors"
+                >
+                  Read Original Article →
+                </a>
+              </div>
             </div>
           </div>
         </article>
