@@ -16,7 +16,7 @@
 /build
 .vercel
 .turbo
-
+dev.db
 # misc
 .DS_Store
 *.pem
@@ -27,8 +27,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
 .env
+.env.local
 
 # vercel
 .vercel
@@ -58,3 +58,5 @@ logs
 # Temporary files
 tmp
 temp
+
+/src/generated/prisma
