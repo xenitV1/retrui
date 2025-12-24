@@ -18,35 +18,38 @@ This document provides comprehensive guidelines for AI agents (Gemini, Claude, C
 
 | Layer | Technology | Version |
 |-------|------------|---------|
-| **Framework** | Next.js (App Router) | 15.x |
+| **Framework** | Next.js (App Router) | 16.x |
+| **Backend API** | Rust + Axum | Latest |
 | **Language** | TypeScript | 5.x |
 | **Styling** | Tailwind CSS | 4.x |
 | **UI Components** | shadcn/ui | Latest |
 | **State Management** | React Hooks + IndexedDB | - |
+| **i18n** | next-intl | 4.x |
 | **Package Manager** | npm / bun | - |
 
 ### Directory Structure
 
 ```
-src/
-├── app/                    # Next.js App Router
-│   ├── api/               # API Routes
-│   │   ├── fetch-rss/     # RSS feed fetching
-│   │   └── fetch-content/ # Article content extraction
-│   ├── about/             # About page
-│   ├── layout.tsx         # Root layout with metadata
-│   ├── page.tsx           # Home page (SSR)
-│   └── news-client.tsx    # Main client component
-├── components/            # React components
-│   ├── ui/               # shadcn/ui components
-│   └── Footer.tsx        # Site footer
-├── hooks/                # Custom React hooks
-│   ├── use-mobile.ts    # Mobile detection
-│   └── use-toast.ts     # Toast notifications
-└── lib/                  # Utility functions
-    ├── content-extractor.ts  # Article extraction
-    ├── indexeddb.ts          # Client-side storage
-    └── utils.ts              # General utilities
+retrui/
+├── src/                       # Next.js Frontend
+│   ├── app/                   # App Router
+│   │   ├── [locale]/          # i18n routes
+│   │   ├── layout.tsx         # Root layout
+│   │   └── news-client.tsx    # Main client component
+│   ├── components/            # React components
+│   ├── i18n/                  # Internationalization
+│   │   └── messages/          # Translation files (7 langs)
+│   └── lib/                   # Utilities
+├── rust-api/                  # Rust Backend
+│   ├── src/
+│   │   ├── main.rs            # Server entry
+│   │   ├── routes/            # API handlers
+│   │   │   ├── fetch_rss.rs   # RSS endpoint
+│   │   │   └── fetch_content.rs # Content endpoint
+│   │   ├── services/          # Business logic
+│   │   └── security/          # SSRF + CORS
+│   └── Cargo.toml             # Rust dependencies
+└── next.config.ts             # Proxy to Rust API
 ```
 
 ---
@@ -119,21 +122,35 @@ export default function Component({ title, onAction }: ComponentProps) {
 
 ## 🔄 Data Flow
 
-### RSS Feed Aggregation
+### RSS Feed Aggregation (Rust API)
 
 ```
-User Request → /api/fetch-rss → RSS Parser → Cache (IndexedDB) → Display
-                     ↓
-              External RSS Feeds
-              (TechCrunch, Verge, etc.)
+User Request → Next.js Proxy → Rust API → feed-rs → Response
+                                   ↓
+                          External RSS Feeds
+                          (20+ sources)
+                                   ↓
+                            IndexedDB Cache
 ```
 
-### Content Extraction
+### Content Extraction (Rust API)
 
 ```
-User Clicks Article → /api/fetch-content → Mozilla Readability → Cache → Display
-                              ↓
-                     Original Article URL
+User Clicks Article → Next.js Proxy → Rust API → Readability → Cache → Display
+                                           ↓
+                                   Original Article URL
+```
+
+### API Proxy Configuration (next.config.ts)
+
+```typescript
+async rewrites() {
+  const rustApiUrl = process.env.RUST_API_URL || 'http://localhost:8080';
+  return [
+    { source: '/api/fetch-rss', destination: `${rustApiUrl}/api/fetch-rss` },
+    { source: '/api/fetch-content', destination: `${rustApiUrl}/api/fetch-content` },
+  ];
+}
 ```
 
 ### Caching Strategy
@@ -207,9 +224,12 @@ npm run dev
 | `package.json` | Dependencies & scripts | ⚠️ Yes |
 | `tsconfig.json` | TypeScript config | ⚠️ Yes |
 | `tailwind.config.ts` | Tailwind config | ⚠️ Yes |
-| `next.config.ts` | Next.js config | ⚠️ Yes |
+| `next.config.ts` | Next.js config + API proxy | ⚠️ Yes |
+| `rust-api/Cargo.toml` | Rust dependencies | ⚠️ Yes |
+| `rust-api/.env` | Rust API config | ⚠️ Yes |
 | `.env.example` | Environment template | ✅ Safe |
 | `README.md` | Documentation | ✅ Safe |
+| `src/proxy.ts` | i18n middleware | ⚠️ Yes |
 
 ---
 

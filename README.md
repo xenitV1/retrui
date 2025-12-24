@@ -88,41 +88,83 @@ Open [http://localhost:3000](http://localhost:3000) to start reading the latest 
 
 | Category | Technology |
 |----------|------------|
-| **Framework** | Next.js 15 (App Router) |
+| **Framework** | Next.js 16 (App Router) |
 | **Language** | TypeScript 5 |
+| **Backend API** | Rust + Axum |
 | **Styling** | Tailwind CSS 4 |
 | **UI Components** | shadcn/ui |
 | **Icons** | Lucide React |
-| **RSS Parsing** | RSS Parser |
-| **Content Extraction** | Mozilla Readability |
+| **RSS Parsing** | feed-rs (Rust) |
+| **Content Extraction** | Readability (Rust) |
 | **State Management** | Zustand |
 | **Analytics** | Vercel Analytics, Speed Insights |
+| **i18n** | next-intl (7 languages) |
+
+## 🏗️ Architecture
+
+```
+┌─────────────────┐     ┌─────────────────┐
+│   Next.js 16    │────▶│   Rust API      │
+│   (Frontend)    │     │   (Backend)     │
+│   Vercel        │     │   Fly.io        │
+└─────────────────┘     └─────────────────┘
+        │                       │
+        ▼                       ▼
+┌─────────────────┐     ┌─────────────────┐
+│   IndexedDB     │     │   RSS Feeds     │
+│   (Cache)       │     │   (20+ sources) │
+└─────────────────┘     └─────────────────┘
+```
+
+### Why Rust Backend?
+
+| Metric | Node.js | Rust | Improvement |
+|--------|---------|------|-------------|
+| Cold Start | ~500ms | ~5ms | 100x faster |
+| Memory | ~150MB | ~10MB | 15x less |
+| p50 Latency | ~200ms | ~50ms | 4x faster |
+| Throughput | ~50 req/s | ~500 req/s | 10x more |
 
 ## 📁 Project Structure
 
 ```
-src/
-├── app/                    # Next.js App Router pages
-│   ├── api/               # API routes
-│   │   ├── fetch-rss/     # RSS feed fetching endpoint
-│   │   └── fetch-content/ # Content extraction endpoint
-│   ├── page.tsx           # Home page with server-side rendering
-│   ├── layout.tsx         # Root layout with SEO metadata
-│   ├── sitemap.ts         # Dynamic sitemap generation
-│   └── news-client.tsx    # Client-side news interface
-├── components/            # Reusable React components
-│   └── ui/               # shadcn/ui components
-├── hooks/                # Custom React hooks
-│   └── use-toast.ts     # Toast notification hook
-└── lib/                  # Utility functions
-    ├── content-extractor.ts  # Article content extraction
-    ├── indexeddb.ts          # Client-side storage
-    └── storage.ts            # Storage utilities
+retrui/
+├── src/                    # Next.js Frontend
+│   ├── app/               # App Router pages
+│   │   ├── [locale]/      # i18n routes (en, tr, de, fr, es, zh, hi)
+│   │   ├── page.tsx       # Home page
+│   │   └── news-client.tsx # Client-side news interface
+│   ├── components/        # React components
+│   ├── i18n/              # Internationalization
+│   │   └── messages/      # Translation files
+│   └── lib/               # Utility functions
+├── rust-api/              # Rust Backend
+│   ├── src/
+│   │   ├── main.rs        # Server entry point
+│   │   ├── routes/        # API handlers
+│   │   ├── services/      # Business logic
+│   │   └── security/      # SSRF + CORS
+│   ├── Cargo.toml         # Dependencies
+│   └── README.md          # Rust API documentation
+└── next.config.ts         # Proxy to Rust API
 ```
 
 ## 🔧 Environment Variables
 
-No environment variables are required for basic functionality. See [.env.example](.env.example) for optional configuration options.
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `RUST_API_URL` | Production | Rust API URL (e.g., `https://retrui-api.fly.dev`) |
+
+### Development
+No environment variables required - Next.js proxies to `localhost:8080` by default.
+
+### Production
+Set in Vercel Dashboard → Settings → Environment Variables:
+```
+RUST_API_URL=https://your-rust-api.fly.dev
+```
+
+See [.env.example](.env.example) and [rust-api/README.md](rust-api/README.md) for more details.
 
 ## 🤝 Contributing
 
