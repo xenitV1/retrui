@@ -132,7 +132,7 @@ export async function GET(request: Request) {
         // Instead of syncing all feeds at once, we rotate through them
         const batchParam = searchParams.get('batch') // e.g., ?batch=0, ?batch=1, etc.
         const batchIndex = batchParam ? parseInt(batchParam) : 0
-        const FEEDS_PER_RUN = 20 // Sync 20 feeds per cron run
+        const FEEDS_PER_RUN = 30 // Sync 30 feeds per cron run (optimized for single cron job)
 
         const startIndex = (batchIndex * FEEDS_PER_RUN) % RSS_FEEDS.length
         const endIndex = Math.min(startIndex + FEEDS_PER_RUN, RSS_FEEDS.length)
