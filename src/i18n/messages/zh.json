@@ -1,8 +1,8 @@
 {
     "meta": {
-        "title": "Retrui - 最新科技新闻",
-        "description": "获取来自TechCrunch、The Verge、Wired等顶级来源的最新科技新闻。实时新闻聚合。",
-        "keywords": "科技新闻, 技术, 新闻, 人工智能, 创业公司"
+        "title": "Retrui - 个人新闻门户",
+        "description": "在一个地方聚合来自世界各地的新闻源。TechCrunch、BBC、The Verge 等。构建您自己的自定义新闻聚合器。",
+        "keywords": "新闻门户, 新闻聚合器, 个性化新闻, 科技新闻, 世界新闻, RSS阅读器"
     },
     "common": {
         "loading": "加载中...",

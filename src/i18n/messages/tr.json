@@ -1,8 +1,8 @@
 {
     "meta": {
-        "title": "Retrui - En Son Teknoloji Haberleri",
-        "description": "TechCrunch, The Verge, Wired ve daha fazlasından en son teknoloji haberlerini takip edin. Gerçek zamanlı haber toplama.",
-        "keywords": "teknoloji haberleri, gündem, haber, yapay zeka, girişimler, teknoloji"
+        "title": "Retrui - Kişisel Haber Portalı",
+        "description": "Dünyanın dört bir yanından haber kaynaklarını tek bir yerde toplayın. TechCrunch, BBC, The Verge ve daha fazlası. Kendi haber agregatörünüzü oluşturun.",
+        "keywords": "haber portalı, haber agregatörü, kişiselleştirilmiş haberler, teknoloji haberleri, dünya haberleri, RSS okuyucu"
     },
     "common": {
         "loading": "Yükleniyor...",

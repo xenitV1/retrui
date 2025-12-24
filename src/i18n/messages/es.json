@@ -1,8 +1,8 @@
 {
     "meta": {
-        "title": "Retrui - Últimas Noticias de Tecnología",
-        "description": "Mantente actualizado con las últimas noticias de tecnología de fuentes como TechCrunch, The Verge, Wired.",
-        "keywords": "noticias tech, tecnología, noticias, IA, startups"
+        "title": "Retrui - Portal de Noticias Personal",
+        "description": "Agrega fuentes de noticias de todo el mundo en un solo lugar. TechCrunch, BBC, The Verge y más. Crea tu propio agregador de noticias personalizado.",
+        "keywords": "portal de noticias, agregador de noticias, noticias personalizadas, noticias tech, noticias mundiales, lector RSS"
     },
     "common": {
         "loading": "Cargando...",

@@ -1,8 +1,8 @@
 {
     "meta": {
-        "title": "Retrui - Aktuelle Technologie-Nachrichten",
-        "description": "Bleiben Sie mit den neuesten Technologie-Nachrichten von Top-Quellen wie TechCrunch, The Verge, Wired auf dem Laufenden.",
-        "keywords": "technologie nachrichten, tech news, nachrichten, KI, startups"
+        "title": "Retrui - Persönlicher Nachrichten-Portal",
+        "description": "Aggregieren Sie Nachrichtenfeeds aus der ganzen Welt an einem Ort. TechCrunch, BBC, The Verge und mehr. Erstellen Sie Ihren eigenen Nachrichten-Aggregator.",
+        "keywords": "nachrichten portal, nachrichten aggregator, personalisierte nachrichten, tech news, welt news, RSS reader"
     },
     "common": {
         "loading": "Laden...",

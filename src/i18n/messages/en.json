@@ -1,8 +1,8 @@
 {
     "meta": {
-        "title": "Retrui - Latest Technology News & Updates",
-        "description": "Stay updated with the latest technology news from top sources including TechCrunch, The Verge, Wired, and more. Real-time tech news aggregation.",
-        "keywords": "tech news, technology, news aggregator, AI, startups, gadgets"
+        "title": "Retrui - Personal News Portal",
+        "description": "Aggregate news feeds from around the world in one place. TechCrunch, BBC, The Verge and more. Build your own custom news aggregator.",
+        "keywords": "news portal, news aggregator, personalized news, tech news, world news, RSS reader"
     },
     "common": {
         "loading": "Loading...",
