@@ -64,15 +64,42 @@ export default async function NewsDetailPage({ params }: Props) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <NewsListSchema items={[schemaData]} />
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-white border-b-4 border-black">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <a href={`/${locale}`} className="flex items-center gap-3 group">
+              <div className="w-12 h-12 border-4 border-double border-black bg-black flex items-center justify-center group-hover:bg-white transition-colors">
+                <span className="text-white font-black font-mono text-2xl group-hover:text-black transition-colors">R</span>
+              </div>
+              <div>
+                <h1 className="text-2xl font-black font-mono text-black tracking-widest">RETRUI</h1>
+                <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">NEWS PORTAL</p>
+              </div>
+            </a>
 
-      <article className="prose prose-invert lg:prose-xl mx-auto border-2 border-primary/20 p-6 rounded-lg bg-black/40 backdrop-blur-sm">
-        <header className="mb-8">
-          <div className="flex items-center gap-2 text-sm text-primary mb-2">
-            <span className="uppercase tracking-tighter border border-primary px-2">{news.category}</span>
-            <span>•</span>
-            <time dateTime={news.publishedAt.toISOString()}>
+            {/* Back to Home */}
+            <a
+              href={`/${locale}`}
+              className="px-4 py-2 border-2 border-black text-black font-mono font-bold uppercase text-sm hover:bg-black hover:text-white transition-colors"
+            >
+              ← Back to News
+            </a>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        <NewsListSchema items={[schemaData]} />
+
+        <article className="border-4 border-black bg-white">
+          {/* Category & Date Bar */}
+          <div className="bg-black text-white px-4 py-2 flex items-center justify-between">
+            <span className="font-mono font-bold uppercase text-sm tracking-wider">{news.category}</span>
+            <time className="font-mono text-sm" dateTime={news.publishedAt.toISOString()}>
               {new Date(news.publishedAt).toLocaleDateString(locale, {
                 year: 'numeric',
                 month: 'long',
@@ -80,33 +107,67 @@ export default async function NewsDetailPage({ params }: Props) {
               })}
             </time>
           </div>
-          <h1 className="text-3xl md:text-5xl font-black mb-4 leading-tight text-white tracking-tighter uppercase italic italic-gradient">
-            {news.title}
-          </h1>
-          {news.author && (
-            <p className="text-secondary font-mono italic">Source: {news.source} | By {news.author}</p>
-          )}
-        </header>
 
-        <div className="text-lg leading-relaxed text-gray-300 font-mono space-y-4">
-          {news.content ? (
-            <div dangerouslySetInnerHTML={{ __html: news.content }} />
-          ) : (
-            <p>{news.description}</p>
-          )}
+          {/* Article Content */}
+          <div className="p-6 md:p-8">
+            {/* Title */}
+            <h1 className="text-2xl md:text-4xl font-black font-mono text-black leading-tight uppercase tracking-tight mb-4">
+              {news.title}
+            </h1>
+
+            {/* Source & Author */}
+            <div className="flex items-center gap-2 text-sm font-mono text-gray-600 mb-6 pb-4 border-b-2 border-gray-200">
+              <span className="font-bold">SOURCE:</span>
+              <span>{news.source}</span>
+              {news.author && (
+                <>
+                  <span className="text-gray-400">|</span>
+                  <span className="font-bold">BY:</span>
+                  <span>{news.author}</span>
+                </>
+              )}
+            </div>
+
+            {/* Content */}
+            <div className="prose prose-lg max-w-none font-mono text-gray-800 leading-relaxed">
+              {news.content ? (
+                <div dangerouslySetInnerHTML={{ __html: news.content }} />
+              ) : (
+                <p className="text-lg">{news.description}</p>
+              )}
+            </div>
+
+            {/* Read Original */}
+            <div className="mt-8 pt-6 border-t-2 border-gray-200">
+              <a
+                href={news.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block px-6 py-3 bg-black text-white font-mono font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors"
+              >
+                Read Original Article →
+              </a>
+            </div>
+          </div>
+        </article>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t-4 border-black bg-white mt-12">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-8 h-8 border-2 border-black bg-black flex items-center justify-center">
+                <span className="text-white font-black font-mono text-sm">R</span>
+              </div>
+              <span className="font-mono font-bold text-black">RETRUI NEWS PORTAL</span>
+            </div>
+            <div className="font-mono text-sm text-gray-600">
+              © {new Date().getFullYear()} Retrui. All rights reserved.
+            </div>
+          </div>
         </div>
-
-        <footer className="mt-12 pt-6 border-t border-primary/20">
-          <a
-            href={news.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block px-6 py-3 bg-primary text-black font-bold uppercase tracking-tighter hover:bg-white transition-colors"
-          >
-            Read Original Article
-          </a>
-        </footer>
-      </article>
+      </footer>
     </div>
   )
 }
