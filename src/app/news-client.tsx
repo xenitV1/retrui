@@ -41,6 +41,7 @@ import { useTranslations } from '@/i18n/use-translations'
 interface NewsItem {
   id: string
   title: string
+  slug?: string // Optional for backward compatibility with initial data
   description: string
   content: string
   fullContent?: string
@@ -96,15 +97,33 @@ function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 }
 
+function generateSlug(title: string, url: string): string {
+  const base = title
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  // Use a simple hash of the URL to ensure same item always gets same slug on client
+  let hash = 0
+  for (let i = 0; i < url.length; i++) {
+    hash = ((hash << 5) - hash) + url.charCodeAt(i)
+    hash |= 0 // Convert to 32bit integer
+  }
+  const hashStr = Math.abs(hash).toString(36).substring(0, 5)
+  return `${base}-${hashStr}`
+}
+
 function cleanDescription(description: string): string {
   return description
     .replace(/<[^>]*>/g, '')
-    .replace(/ /g, ' ')
-    .replace(/&/g, '&')
-    .replace(/</g, '<')
-    .replace(/>/g, '>')
-    .replace(/"/g, '"')
-    .replace(/'/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
     .trim()
     .substring(0, 300)
 }
@@ -189,17 +208,21 @@ async function fetchRSSFeed(feed: { name: string; url: string; category: string 
 
     const news = (feedData.items || [])
       .slice(0, 15)
-      .map((item) => ({
-        id: generateId(),
-        title: item.title || 'Untitled',
-        description: cleanDescription(item.contentSnippet || item.content || ''),
-        content: cleanDescription(item.content || item.contentSnippet || ''),
-        author: (item.creator || item.author || feed.name) as string,
-        publishedAt: item.pubDate || new Date().toISOString(),
-        source: feed.name,
-        category: feed.category,
-        url: item.link || '#'
-      }))
+      .map((item) => {
+        const itemUrl = item.link || '#'
+        return {
+          id: generateId(),
+          title: item.title || 'Untitled',
+          slug: generateSlug(item.title || 'news', itemUrl),
+          description: cleanDescription(item.contentSnippet || item.content || ''),
+          content: cleanDescription(item.content || item.contentSnippet || ''),
+          author: (item.creator || item.author || feed.name) as string,
+          publishedAt: item.pubDate || new Date().toISOString(),
+          source: feed.name,
+          category: feed.category,
+          url: itemUrl
+        }
+      })
       // Filter: only news from last 24 hours
       .filter(item => {
         const publishedTime = new Date(item.publishedAt).getTime()
@@ -1688,9 +1711,11 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
                                           <time>{formatDate(item.publishedAt)}</time>
                                         </div>
                                       </div>
-                                      <h2 className={`text-sm font-bold leading-tight font-mono ${darkMode ? 'text-white' : 'text-black'}`}>
-                                        {item.title}
-                                      </h2>
+                                      <Link href={`/${currentLocale}/news/${item.slug || item.id}`} className="block group">
+                                        <h2 className={`text-sm font-bold leading-tight font-mono group-hover:underline ${darkMode ? 'text-white' : 'text-black'}`}>
+                                          {item.title}
+                                        </h2>
+                                      </Link>
                                       <p className={`text-xs leading-relaxed line-clamp-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                                         {item.description}
                                       </p>
