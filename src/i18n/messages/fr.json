@@ -64,7 +64,7 @@
     "fiveDayRetention": "Rétention de 5 jours",
     "fiveDayRetentionDesc": "Nous conservons les actualités pendant 5 jours seulement. Les anciens articles sont automatiquement nettoyés pour vous assurer de toujours voir les actualités les plus récentes.",
     "realTimeUpdates": "Mises à jour en temps réel",
-    "realTimeUpdatesDesc": "Les flux d'actualités sont synchronisés toutes les 8 heures via des tâches cron automatisées, vous garantissant l'accès aux derniers titres.",
+    "realTimeUpdatesDesc": "Les flux d'actualités sont synchronisés toutes les 15 minutes via des tâches cron automatisées, vous garantissant l'accès aux derniers titres.",
     "autoCleanup": "Nettoyage automatique",
     "autoCleanupDesc": "Les articles de plus de 5 jours sont automatiquement supprimés de notre base de données pour maintenir des performances et une fraîcheur optimales.",
     "clientCache": "Cache côté client (IndexedDB)",

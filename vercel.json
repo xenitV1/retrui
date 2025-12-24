@@ -12,11 +12,5 @@
       "memory": 1024,
       "maxDuration": 60
     }
-  },
-  "crons": [
-    {
-      "path": "/api/cron/sync-news",
-      "schedule": "0 */8 * * *"
-    }
-  ]
+  }
 }
