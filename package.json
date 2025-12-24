@@ -12,6 +12,7 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "prepare": "husky",
+    "postinstall": "prisma generate",
     "test:rss": "tsx scripts/test-rss-feeds.ts"
   },
   "dependencies": {
