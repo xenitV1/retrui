@@ -241,7 +241,7 @@ function ShareButton({ slug, title, locale, darkMode }: { slug: string; title: s
 }
 
 
-async function fetchRSSFeed(feed: { name: string; url: string; category: string }): Promise<NewsItem[]> {
+async function fetchRSSFeed(feed: { name: string; url: string; category: string }, forceRefresh = false): Promise<NewsItem[]> {
   try {
     // Check if feed is available (not disabled by circuit breaker)
     const isAvailable = await isFeedAvailable(feed.url)
@@ -253,12 +253,15 @@ async function fetchRSSFeed(feed: { name: string; url: string; category: string 
       return []
     }
 
-    // Try to get from cache first
+    // Try to get from cache first - skip if forceRefresh is true
     const cacheKey = `rss_${feed.name}`
-    const cached = await storage.get<{ data: NewsItem[], timestamp: number }>(cacheKey)
 
-    if (cached && Date.now() - cached.timestamp < 5 * 60 * 1000) { // 5 minutes cache
-      return cached.data
+    if (!forceRefresh) {
+      const cached = await storage.get<{ data: NewsItem[], timestamp: number }>(cacheKey)
+
+      if (cached && Date.now() - cached.timestamp < 5 * 60 * 1000) { // 5 minutes cache
+        return cached.data
+      }
     }
 
     // Fetch RSS feed through backend API (to avoid CORS issues)
@@ -371,7 +374,8 @@ async function fetchDefaultNewsIncremental(
   onUpdate: (items: NewsItem[]) => void,
   onProgress?: () => void,
   language?: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  forceRefresh = false
 ): Promise<void> {
   try {
     // Check if aborted
@@ -382,11 +386,13 @@ async function fetchDefaultNewsIncremental(
       ? `default_news_cache_${JSON.stringify(feedPreferences)}_${language || 'all'}`
       : `default_news_cache_${language || 'all'}`
 
-    const cached = await storage.get<{ data: NewsItem[], timestamp: number }>(cacheKey)
+    if (!forceRefresh) {
+      const cached = await storage.get<{ data: NewsItem[], timestamp: number }>(cacheKey)
 
-    if (cached && Date.now() - cached.timestamp < 2 * 60 * 1000) { // 2 minutes cache
-      onUpdate(cached.data)
-      return
+      if (cached && Date.now() - cached.timestamp < 2 * 60 * 1000) { // 2 minutes cache
+        onUpdate(cached.data)
+        return
+      }
     }
 
     // Filter feeds based on user preferences
@@ -413,7 +419,7 @@ async function fetchDefaultNewsIncremental(
 
       // Fetch all feeds in this batch in parallel
       const batchResults = await Promise.all(
-        batch.map(feed => fetchRSSFeed(feed))
+        batch.map(feed => fetchRSSFeed(feed, forceRefresh))
       )
 
       // Add results to allNews
@@ -461,7 +467,8 @@ async function fetchCustomNewsIncremental(
   customFeeds: CustomFeed[],
   onUpdate: (items: NewsItem[]) => void,
   onProgress?: () => void,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  forceRefresh = false
 ): Promise<void> {
   if (customFeeds.length === 0) return
 
@@ -470,11 +477,14 @@ async function fetchCustomNewsIncremental(
     if (signal?.aborted) return
 
     const cacheKey = 'custom_news_cache'
-    const cached = await storage.get<{ data: NewsItem[], timestamp: number }>(cacheKey)
 
-    if (cached && Date.now() - cached.timestamp < 2 * 60 * 1000) { // 2 minutes cache
-      onUpdate(cached.data)
-      return
+    if (!forceRefresh) {
+      const cached = await storage.get<{ data: NewsItem[], timestamp: number }>(cacheKey)
+
+      if (cached && Date.now() - cached.timestamp < 2 * 60 * 1000) { // 2 minutes cache
+        onUpdate(cached.data)
+        return
+      }
     }
 
     // Filter out disabled feeds using circuit breaker
@@ -491,7 +501,7 @@ async function fetchCustomNewsIncremental(
 
       // Fetch all feeds in this batch in parallel
       const batchResults = await Promise.all(
-        batch.map(feed => fetchRSSFeed(feed))
+        batch.map(feed => fetchRSSFeed(feed, forceRefresh))
       )
 
       // Add results to allNews
@@ -678,7 +688,7 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
   // Initial value is set from currentLocale in useState above, but subsequent changes are user-driven
 
   // Fetch all news with useCallback - uses AbortController to cancel previous fetches
-  const fetchAllNews = useCallback(async (showLoading = true) => {
+  const fetchAllNews = useCallback(async (showLoading = true, forceRefresh = false) => {
     // Cancel any pending fetch
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
@@ -733,11 +743,11 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
         fetchDefaultNewsIncremental(feedPreferences || undefined, (items) => {
           setDefaultNews(items)
           setFilteredDefaultNews(items)
-        }, updateProgress, defaultLanguage, signal),
+        }, updateProgress, defaultLanguage, signal, forceRefresh),
         fetchCustomNewsIncremental(customFeeds, (items) => {
           setCustomNews(items)
           setFilteredCustomNews(items)
-        }, updateProgress, signal)
+        }, updateProgress, signal, forceRefresh)
       ])
 
       // Only update if not aborted
@@ -949,7 +959,7 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
       setTimeLeft(prev => {
         if (prev <= 1) {
           // Trigger refresh when timer hits 0
-          fetchAllNews(false)
+          fetchAllNews(false, true)
           return REFRESH_INTERVAL_SECONDS
         }
         return prev - 1
@@ -1663,7 +1673,7 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => fetchAllNews(true)}
+                  onClick={() => fetchAllNews(true, true)}
                   disabled={isRefreshing}
                   className={`text-xs font-bold font-mono uppercase border-2 px-2 sm:px-3 py-1.5 sm:py-2 retro-header-button transition-all ${darkMode ? 'text-white border-gray-600 bg-gray-800 hover:bg-white hover:text-black' : 'text-black border-black bg-white hover:bg-black hover:text-white'}`}
                   title="Refresh news"
