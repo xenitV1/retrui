@@ -314,7 +314,7 @@ async function fetchDefaultNewsIncremental(
       )
 
       // Update state with current progress
-      onUpdate(allNews.slice(0, 100))
+      onUpdate([...allNews])
 
       // Call progress callback for each feed in batch
       if (onProgress) {
@@ -333,7 +333,7 @@ async function fetchDefaultNewsIncremental(
     if (signal?.aborted) return
 
     // Cache the final results
-    await storage.set(cacheKey, { data: allNews.slice(0, 100), timestamp: Date.now() })
+    await storage.set(cacheKey, { data: allNews, timestamp: Date.now() })
   } catch (error) {
     // Only log if not aborted
     if (signal?.aborted) return
@@ -392,7 +392,7 @@ async function fetchCustomNewsIncremental(
       )
 
       // Update state with current progress
-      onUpdate(allNews.slice(0, 100))
+      onUpdate([...allNews])
 
       // Call progress callback for each feed in batch
       if (onProgress) {
@@ -411,7 +411,7 @@ async function fetchCustomNewsIncremental(
     if (signal?.aborted) return
 
     // Cache the final results
-    await storage.set(cacheKey, { data: allNews.slice(0, 100), timestamp: Date.now() })
+    await storage.set(cacheKey, { data: allNews, timestamp: Date.now() })
   } catch (error) {
     // Only log if not aborted
     if (signal?.aborted) return
@@ -447,7 +447,7 @@ async function fetchDefaultNews(feedPreferences?: FeedPreferences): Promise<News
     )
 
     // Return up to 100 news items maximum
-    const result = allNews.slice(0, 100)
+    const result = allNews
 
     // Cache the results
     await storage.set(cacheKey, { data: result, timestamp: Date.now() })
@@ -482,7 +482,7 @@ async function fetchCustomNews(customFeeds: CustomFeed[]): Promise<NewsItem[]> {
     )
 
     // Return up to 100 news items maximum
-    const result = allNews.slice(0, 100)
+    const result = allNews
 
     // Cache the results
     await storage.set(cacheKey, { data: result, timestamp: Date.now() })
@@ -752,7 +752,7 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
           // Update state with current progress
           setColumnNewsData(prev => ({
             ...prev,
-            [column.id]: columnItems.slice(0, 100)
+            [column.id]: [...columnItems]
           }))
 
           // Add delay between batches (except after last batch)
@@ -1711,10 +1711,12 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
                                           <time>{formatDate(item.publishedAt)}</time>
                                         </div>
                                       </div>
-                                      <Link href={`/${currentLocale}/news/${item.slug || item.id}`} className="block group">
-                                        <h2 className={`text-sm font-bold leading-tight font-mono group-hover:underline ${darkMode ? 'text-white' : 'text-black'}`}>
-                                          {item.title}
-                                        </h2>
+                                      <h2 className={`text-sm font-bold leading-tight font-mono hover:underline cursor-pointer ${darkMode ? 'text-white' : 'text-black'}`}>
+                                        {item.title}
+                                      </h2>
+                                      {/* Hidden SEO link for Google crawling */}
+                                      <Link href={`/${currentLocale}/news/${item.slug || item.id}`} className="sr-only" tabIndex={-1} aria-hidden="true">
+                                        {item.title}
                                       </Link>
                                       <p className={`text-xs leading-relaxed line-clamp-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                                         {item.description}

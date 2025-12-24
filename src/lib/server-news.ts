@@ -157,7 +157,7 @@ export async function fetchInitialNews(locale: Locale): Promise<ServerNewsItem[]
                 language: locale === 'tr' ? 'tr' : 'en', // Match locale
             },
             orderBy: { publishedAt: 'desc' },
-            take: 30
+            take: 200 // Get all recent news from DB
         })
 
         if (newsFromDb.length > 0) {
