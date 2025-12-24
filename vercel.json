@@ -13,18 +13,5 @@
       "maxDuration": 60
     }
   },
-  "crons": [
-    {
-      "path": "/api/cron/sync-news?batch=0",
-      "schedule": "*/15 * * * *"
-    },
-    {
-      "path": "/api/cron/sync-news?batch=1",
-      "schedule": "5-59/15 * * * *"
-    },
-    {
-      "path": "/api/cron/sync-news?batch=2",
-      "schedule": "10-59/15 * * * *"
-    }
-  ]
+  "_comment": "Cron jobs: Use external cron service (cron-job.org) for free unlimited scheduling"
 }
