@@ -1696,32 +1696,32 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
                                 paginatedNews.map((item) => (
                                   <article
                                     key={item.id}
-                                    className={`py-3 px-3 border-b cursor-pointer hover:bg-black hover:text-white transition-all ${darkMode ? 'border-gray-700' : 'border-black'}`}
+                                    className={`group py-3 px-3 border-b cursor-pointer hover:bg-black transition-all ${darkMode ? 'border-gray-700' : 'border-black'}`}
                                     onClick={() => openNews(item)}
                                   >
                                     <div className="space-y-2">
                                       <div className="flex items-center justify-between">
                                         <span
-                                          className="text-xs font-bold font-mono uppercase text-muted-foreground"
+                                          className="text-xs font-bold font-mono uppercase text-muted-foreground group-hover:text-white"
                                         >
                                           [{item.category}]
                                         </span>
-                                        <div className={`flex items-center gap-1 text-xs font-mono ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>
+                                        <div className={`flex items-center gap-1 text-xs font-mono group-hover:text-white ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>
                                           <Clock className="w-3 h-3" />
                                           <time>{formatDate(item.publishedAt)}</time>
                                         </div>
                                       </div>
-                                      <h2 className={`text-sm font-bold leading-tight font-mono hover:underline cursor-pointer ${darkMode ? 'text-white' : 'text-black'}`}>
+                                      <h2 className={`text-sm font-bold leading-tight font-mono group-hover:text-white group-hover:underline cursor-pointer ${darkMode ? 'text-white' : 'text-black'}`}>
                                         {item.title}
                                       </h2>
                                       {/* Hidden SEO link for Google crawling */}
                                       <Link href={`/${currentLocale}/news/${item.slug || item.id}`} className="sr-only" tabIndex={-1} aria-hidden="true">
                                         {item.title}
                                       </Link>
-                                      <p className={`text-xs leading-relaxed line-clamp-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                      <p className={`text-xs leading-relaxed line-clamp-2 group-hover:text-gray-200 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                                         {item.description}
                                       </p>
-                                      <span className={`text-xs font-mono ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>
+                                      <span className={`text-xs font-mono group-hover:text-gray-300 ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>
                                         SOURCE: {item.source.toUpperCase()}
                                       </span>
                                     </div>
