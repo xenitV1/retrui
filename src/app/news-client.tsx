@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { Search, Clock, X, RefreshCw, ChevronLeft, ChevronRight, Filter, ExternalLink, ArrowRight, Trash2, ChevronDown, Twitter, Github, Info, Plus, Settings, LayoutTemplate, Menu, Globe } from 'lucide-react'
+import { Search, Clock, X, RefreshCw, ChevronLeft, ChevronRight, Filter, ExternalLink, ArrowRight, Trash2, ChevronDown, Twitter, Github, Info, Plus, Settings, LayoutTemplate, Menu, Globe, Share2, Copy, Check, Linkedin, Facebook } from 'lucide-react'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -127,6 +127,119 @@ function cleanDescription(description: string): string {
     .trim()
     .substring(0, 300)
 }
+
+// Inline Share Button component
+function ShareButton({ slug, title, locale, darkMode }: { slug: string; title: string; locale: string; darkMode: boolean }) {
+  const [showPopover, setShowPopover] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const popoverRef = useRef<HTMLDivElement>(null)
+
+  const shareUrl = `https://retrui.vercel.app/${locale}/news/${slug}`
+  const encodedUrl = encodeURIComponent(shareUrl)
+  const encodedTitle = encodeURIComponent(title)
+
+  const copyToClipboard = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      const textArea = document.createElement('textarea')
+      textArea.value = shareUrl
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  const handleShareClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setShowPopover(!showPopover)
+  }
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        setShowPopover(false)
+      }
+    }
+    if (showPopover) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showPopover])
+
+  return (
+    <div className="relative" ref={popoverRef}>
+      <button
+        onClick={handleShareClick}
+        className={`p-1.5 rounded transition-all ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-white' : 'hover:bg-gray-200 text-gray-500 hover:text-black'}`}
+        title="Share"
+      >
+        <Share2 className="w-4 h-4" />
+      </button>
+
+      {showPopover && (
+        <div className={`absolute right-0 top-full mt-1 z-50 p-2 border-2 shadow-lg ${darkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-black'}`}>
+          <div className="flex items-center gap-1">
+            {/* Twitter/X */}
+            <a
+              href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="w-7 h-7 flex items-center justify-center border border-black bg-black text-white hover:bg-white hover:text-black transition-colors"
+              title="Share on X"
+            >
+              <Twitter className="w-3.5 h-3.5" />
+            </a>
+
+            {/* LinkedIn */}
+            <a
+              href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="w-7 h-7 flex items-center justify-center border border-blue-600 bg-blue-600 text-white hover:bg-white hover:text-blue-600 transition-colors"
+              title="Share on LinkedIn"
+            >
+              <Linkedin className="w-3.5 h-3.5" />
+            </a>
+
+            {/* Facebook */}
+            <a
+              href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="w-7 h-7 flex items-center justify-center border border-blue-800 bg-blue-800 text-white hover:bg-white hover:text-blue-800 transition-colors"
+              title="Share on Facebook"
+            >
+              <Facebook className="w-3.5 h-3.5" />
+            </a>
+
+            {/* Copy Link */}
+            <button
+              onClick={copyToClipboard}
+              className={`w-7 h-7 flex items-center justify-center border transition-all ${copied
+                ? 'border-green-600 bg-green-600 text-white'
+                : `${darkMode ? 'border-gray-500 bg-gray-700 text-white hover:bg-gray-600' : 'border-gray-400 bg-white text-gray-600 hover:border-black hover:text-black'}`
+                }`}
+              title={copied ? 'Copied!' : 'Copy Link'}
+            >
+              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 
 async function fetchRSSFeed(feed: { name: string; url: string; category: string }): Promise<NewsItem[]> {
   try {
@@ -1721,9 +1834,17 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
                                       <p className={`text-xs leading-relaxed line-clamp-2 group-hover:text-gray-200 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                                         {item.description}
                                       </p>
-                                      <span className={`text-xs font-mono group-hover:text-gray-300 ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>
-                                        SOURCE: {item.source.toUpperCase()}
-                                      </span>
+                                      <div className="flex items-center justify-between">
+                                        <span className={`text-xs font-mono group-hover:text-gray-300 ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>
+                                          SOURCE: {item.source.toUpperCase()}
+                                        </span>
+                                        <ShareButton
+                                          slug={item.slug || item.id}
+                                          title={item.title}
+                                          locale={currentLocale}
+                                          darkMode={darkMode}
+                                        />
+                                      </div>
                                     </div>
                                   </article>
                                 ))
@@ -1839,8 +1960,16 @@ export default function NewsClient({ initialNews, currentLocale }: NewsClientPro
                   >
                     [{selectedNews.category}]
                   </span>
-                  <div className={`text-xs font-mono retro-source-date ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>
-                    SOURCE: {selectedNews.source.toUpperCase()} • DATE: {formatDate(selectedNews.publishedAt)}
+                  <div className="flex items-center justify-between">
+                    <div className={`text-xs font-mono retro-source-date ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>
+                      SOURCE: {selectedNews.source.toUpperCase()} • DATE: {formatDate(selectedNews.publishedAt)}
+                    </div>
+                    <ShareButton
+                      slug={selectedNews.slug || selectedNews.id}
+                      title={selectedNews.title}
+                      locale={currentLocale}
+                      darkMode={darkMode}
+                    />
                   </div>
                 </div>
                 <Button
