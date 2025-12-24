@@ -12,6 +12,5 @@
       "memory": 1024,
       "maxDuration": 60
     }
-  },
-  "_comment": "Cron jobs: Use external cron service (cron-job.org) for free unlimited scheduling"
+  }
 }
