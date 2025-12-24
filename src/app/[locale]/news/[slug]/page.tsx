@@ -104,6 +104,35 @@ export default async function NewsDetailPage({ params }: Props) {
     notFound()
   }
 
+  // Check if we need to fetch full content
+  // We strictly prefer DB content if it exists and is different from description
+  const shouldFetchContent = !news.content || (news.description && news.content.trim() === news.description.trim())
+
+  // If content is missing or just a duplicate of description, try to fetch it on the fly
+  if (shouldFetchContent && news.url) {
+    try {
+      const { extractContent } = await import('@/lib/content-extractor')
+      const extracted = await extractContent(news.url)
+
+      if (extracted && extracted.text && extracted.text.length > 0) {
+        // Use the extracted content
+        news.content = extracted.html || extracted.text
+
+        // Update database with the new content so next time it's fast
+        // We use a fire-and-forget approach or simple await since this is a Server Component
+        await prisma.news.update({
+          where: { id: news.id },
+          data: {
+            content: extracted.html || extracted.text
+          }
+        })
+      }
+    } catch (error) {
+      console.error('Failed to extract content on-the-fly:', error)
+      // Continue with existing content (description fallback)
+    }
+  }
+
   // Schema data for SEO
   const schemaData = {
     title: news.title,
