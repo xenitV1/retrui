@@ -1,55 +1,87 @@
 {
-    "meta": {
-        "title": "Retrui - Portail d'Actualités Personnel",
-        "description": "Agrégerez des flux d'actualités du monde entier en un seul endroit. TechCrunch, BBC, The Verge et plus. Créez votre propre agrégateur d'actualités personnalisé.",
-        "keywords": "portail d'actualités, agrégateur d'actualités, actualités personnalisées, actualités tech, actualités mondiales, lecteur RSS"
-    },
-    "common": {
-        "loading": "Chargement...",
-        "refresh": "Actualiser",
-        "search": "Rechercher",
-        "about": "À propos",
-        "settings": "Paramètres",
-        "language": "Langue",
-        "darkMode": "Mode sombre",
-        "lightMode": "Mode clair"
-    },
-    "news": {
-        "articles": "articles",
-        "noNews": "Aucune actualité disponible",
-        "source": "Source",
-        "readMore": "Lire la suite",
-        "openOriginal": "Ouvrir l'original"
-    },
-    "categories": {
-        "all": "Tous",
-        "news": "Actualités",
-        "business": "Affaires",
-        "technology": "Technologie",
-        "science": "Science",
-        "sports": "Sports",
-        "entertainment": "Divertissement",
-        "lifestyle": "Style de vie",
-        "opinion": "Opinion"
-    },
-    "sidebar": {
-        "system": "SYSTÈME",
-        "category": "CATÉGORIE",
-        "language": "LANGUE",
-        "selected": "SÉLECTIONNÉ",
-        "allLanguages": "Toutes les langues",
-        "default": "Par défaut",
-        "custom": "Personnalisé",
-        "loading": "Chargement",
-        "myFeeds": "MES FLUX",
-        "updated": "MIS À JOUR",
-        "nextRefresh": "PROCHAINE MISE À JOUR",
-        "addFeed": "AJOUTER FLUX",
-        "feedSettings": "PARAMÈTRES FLUX",
-        "columnLayout": "MISE EN PAGE"
-    },
-    "footer": {
-        "developedBy": "Développé par",
-        "copyright": "© 2025 RETRUI"
-    }
+  "meta": {
+    "title": "Retrui - Portail d'Actualités Personnel",
+    "description": "Agrégerez des flux d'actualités du monde entier en un seul endroit. TechCrunch, BBC, The Verge et plus. Créez votre propre agrégateur d'actualités personnalisé.",
+    "keywords": "portail d'actualités, agrégateur d'actualités, actualités personnalisées, actualités tech, actualités mondiales, lecteur RSS"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "refresh": "Actualiser",
+    "search": "Rechercher",
+    "about": "À propos",
+    "settings": "Paramètres",
+    "language": "Langue",
+    "darkMode": "Mode sombre",
+    "lightMode": "Mode clair",
+    "backToNews": "Retour aux actualités"
+  },
+  "news": {
+    "articles": "articles",
+    "noNews": "Aucune actualité disponible",
+    "source": "Source",
+    "readMore": "Lire la suite",
+    "openOriginal": "Ouvrir l'original"
+  },
+  "categories": {
+    "all": "Tous",
+    "news": "Actualités",
+    "business": "Affaires",
+    "technology": "Technologie",
+    "science": "Science",
+    "sports": "Sports",
+    "entertainment": "Divertissement",
+    "lifestyle": "Style de vie",
+    "opinion": "Opinion"
+  },
+  "sidebar": {
+    "system": "SYSTÈME",
+    "category": "CATÉGORIE",
+    "language": "LANGUE",
+    "selected": "SÉLECTIONNÉ",
+    "allLanguages": "Toutes les langues",
+    "default": "Par défaut",
+    "custom": "Personnalisé",
+    "loading": "Chargement",
+    "myFeeds": "MES FLUX",
+    "updated": "MIS À JOUR",
+    "nextRefresh": "PROCHAINE MISE À JOUR",
+    "addFeed": "AJOUTER FLUX",
+    "feedSettings": "PARAMÈTRES FLUX",
+    "columnLayout": "MISE EN PAGE"
+  },
+  "footer": {
+    "developedBy": "Développé par",
+    "copyright": "© 2025 RETRUI"
+  },
+  "about": {
+    "title": "À PROPOS DE RETRUI",
+    "intro": "Retrui est un agrégateur d'actualités moderne au style rétro qui vous apporte les dernières nouvelles de plusieurs sources fiables. Construit avec une belle interface nostalgique et des technologies web de pointe.",
+    "dataCollection": "COLLECTE DE DONNÉES",
+    "dataCollectionDesc": "Agrégation de flux RSS : Retrui agrège les actualités de plus de 175 flux RSS fiables en temps réel dans 8 catégories.",
+    "dataStorage": "STOCKAGE DES DONNÉES",
+    "serverDatabase": "Base de données serveur (Prisma Postgres)",
+    "serverDatabaseDesc": "Les actualités sont stockées dans notre base de données pendant 5 jours. Les articles de plus de 5 jours sont automatiquement supprimés pour garder le contenu frais et pertinent.",
+    "fiveDayRetention": "Rétention de 5 jours",
+    "fiveDayRetentionDesc": "Nous conservons les actualités pendant 5 jours seulement. Les anciens articles sont automatiquement nettoyés pour vous assurer de toujours voir les actualités les plus récentes.",
+    "realTimeUpdates": "Mises à jour en temps réel",
+    "realTimeUpdatesDesc": "Les flux d'actualités sont synchronisés toutes les 15 minutes via des tâches cron automatisées, vous garantissant l'accès aux derniers titres.",
+    "autoCleanup": "Nettoyage automatique",
+    "autoCleanupDesc": "Les articles de plus de 5 jours sont automatiquement supprimés de notre base de données pour maintenir des performances et une fraîcheur optimales.",
+    "clientCache": "Cache côté client (IndexedDB)",
+    "rssCacheTTL": "Cache flux RSS : 5 minutes TTL",
+    "newsListCacheTTL": "Cache liste d'actualités : 2 minutes TTL",
+    "articleCacheTTL": "Cache contenu article : 24 heures TTL",
+    "offlineSupport": "Support hors ligne : Le contenu mis en cache reste disponible même hors ligne.",
+    "privacy": "Confidentialité : Votre historique de lecture et les données en cache restent sur votre appareil. Nous ne suivons pas le comportement de lecture individuel.",
+    "techStack": "PILE TECHNOLOGIQUE",
+    "framework": "Framework",
+    "language": "Langage",
+    "styling": "Style",
+    "uiComponents": "Composants UI",
+    "database": "Base de données",
+    "rssParsing": "Analyse RSS",
+    "developer": "DÉVELOPPEUR",
+    "openSource": "Retrui est open source et disponible sur GitHub.",
+    "builtWith": "Construit avec ❤️ en utilisant Next.js, TypeScript et Tailwind CSS."
+  }
 }

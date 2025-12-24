@@ -1,55 +1,87 @@
 {
-    "meta": {
-        "title": "Retrui - व्यक्तिगत न्यूज़ पोर्टल",
-        "description": "दुनिया भर से न्यूज़ फ़ीड एक ही जगह पर एकत्रित करें। TechCrunch, BBC, The Verge और अधिक। अपना कस्टम न्यूज़ एग्रीगेटर बनाएं।",
-        "keywords": "न्यूज़ पोर्टल, न्यूज़ एग्रीगेटर, व्यक्तिगत न्यूज़, टेक न्यूज़, विश्व समाचार, RSS रीडर"
-    },
-    "common": {
-        "loading": "लोड हो रहा है...",
-        "refresh": "रिफ्रेश करें",
-        "search": "खोजें",
-        "about": "हमारे बारे में",
-        "settings": "सेटिंग्स",
-        "language": "भाषा",
-        "darkMode": "डार्क मोड",
-        "lightMode": "लाइट मोड"
-    },
-    "news": {
-        "articles": "लेख",
-        "noNews": "कोई समाचार उपलब्ध नहीं",
-        "source": "स्रोत",
-        "readMore": "और पढ़ें",
-        "openOriginal": "मूल खोलें"
-    },
-    "categories": {
-        "all": "सभी",
-        "news": "समाचार",
-        "business": "व्यापार",
-        "technology": "प्रौद्योगिकी",
-        "science": "विज्ञान",
-        "sports": "खेल",
-        "entertainment": "मनोरंजन",
-        "lifestyle": "जीवनशैली",
-        "opinion": "राय"
-    },
-    "sidebar": {
-        "system": "सिस्टम",
-        "category": "श्रेणी",
-        "language": "भाषा",
-        "selected": "चयनित",
-        "allLanguages": "सभी भाषाएं",
-        "default": "डिफ़ॉल्ट",
-        "custom": "कस्टम",
-        "loading": "लोड हो रहा",
-        "myFeeds": "मेरी फ़ीड्स",
-        "updated": "अपडेट किया",
-        "nextRefresh": "अगला अपडेट",
-        "addFeed": "फ़ीड जोड़ें",
-        "feedSettings": "फ़ीड सेटिंग्स",
-        "columnLayout": "कॉलम लेआउट"
-    },
-    "footer": {
-        "developedBy": "द्वारा विकसित",
-        "copyright": "© 2025 RETRUI"
-    }
+  "meta": {
+    "title": "Retrui - व्यक्तिगत न्यूज़ पोर्टल",
+    "description": "दुनिया भर से न्यूज़ फ़ीड एक ही जगह पर एकत्रित करें। TechCrunch, BBC, The Verge और अधिक। अपना कस्टम न्यूज़ एग्रीगेटर बनाएं।",
+    "keywords": "न्यूज़ पोर्टल, न्यूज़ एग्रीगेटर, व्यक्तिगत न्यूज़, टेक न्यूज़, विश्व समाचार, RSS रीडर"
+  },
+  "common": {
+    "loading": "लोड हो रहा है...",
+    "refresh": "रिफ्रेश करें",
+    "search": "खोजें",
+    "about": "हमारे बारे में",
+    "settings": "सेटिंग्स",
+    "language": "भाषा",
+    "darkMode": "डार्क मोड",
+    "lightMode": "लाइट मोड",
+    "backToNews": "समाचार पर वापस जाएं"
+  },
+  "news": {
+    "articles": "लेख",
+    "noNews": "कोई समाचार उपलब्ध नहीं",
+    "source": "स्रोत",
+    "readMore": "और पढ़ें",
+    "openOriginal": "मूल खोलें"
+  },
+  "categories": {
+    "all": "सभी",
+    "news": "समाचार",
+    "business": "व्यापार",
+    "technology": "प्रौद्योगिकी",
+    "science": "विज्ञान",
+    "sports": "खेल",
+    "entertainment": "मनोरंजन",
+    "lifestyle": "जीवनशैली",
+    "opinion": "राय"
+  },
+  "sidebar": {
+    "system": "सिस्टम",
+    "category": "श्रेणी",
+    "language": "भाषा",
+    "selected": "चयनित",
+    "allLanguages": "सभी भाषाएं",
+    "default": "डिफ़ॉल्ट",
+    "custom": "कस्टम",
+    "loading": "लोड हो रहा",
+    "myFeeds": "मेरी फ़ीड्स",
+    "updated": "अपडेट किया",
+    "nextRefresh": "अगला अपडेट",
+    "addFeed": "फ़ीड जोड़ें",
+    "feedSettings": "फ़ीड सेटिंग्स",
+    "columnLayout": "कॉलम लेआउट"
+  },
+  "footer": {
+    "developedBy": "द्वारा विकसित",
+    "copyright": "© 2025 RETRUI"
+  },
+  "about": {
+    "title": "RETRUI के बारे में",
+    "intro": "Retrui एक आधुनिक, रेट्रो-स्टाइल न्यूज़ एग्रीगेटर है जो आपको कई विश्वसनीय स्रोतों से नवीनतम समाचार लाता है। एक सुंदर नॉस्टेल्जिक इंटरफ़ेस और अत्याधुनिक वेब तकनीकों के साथ बनाया गया।",
+    "dataCollection": "डेटा संग्रह",
+    "dataCollectionDesc": "RSS फ़ीड एग्रीगेशन: Retrui 8 श्रेणियों में 175+ विश्वसनीय RSS फ़ीड्स से रीयल-टाइम में समाचार एकत्रित करता है।",
+    "dataStorage": "डेटा स्टोरेज",
+    "serverDatabase": "सर्वर डेटाबेस (Prisma Postgres)",
+    "serverDatabaseDesc": "समाचार हमारे डेटाबेस में 5 दिनों के लिए संग्रहीत किए जाते हैं। 5 दिन से पुराने लेख स्वचालित रूप से हटा दिए जाते हैं ताकि सामग्री ताज़ा और प्रासंगिक रहे।",
+    "fiveDayRetention": "5-दिन की अवधारण",
+    "fiveDayRetentionDesc": "हम समाचार केवल 5 दिनों के लिए रखते हैं। पुराने लेख स्वचालित रूप से साफ हो जाते हैं ताकि आप हमेशा सबसे वर्तमान समाचार देखें।",
+    "realTimeUpdates": "रीयल-टाइम अपडेट",
+    "realTimeUpdatesDesc": "न्यूज़ फ़ीड्स हर 15 मिनट में स्वचालित क्रॉन जॉब्स के माध्यम से सिंक्रनाइज़ होती हैं, जिससे आपको नवीनतम हेडलाइन्स तक पहुंच मिलती है।",
+    "autoCleanup": "स्वचालित सफाई",
+    "autoCleanupDesc": "5 दिन से पुराने लेख इष्टतम प्रदर्शन और ताज़गी बनाए रखने के लिए हमारे डेटाबेस से स्वचालित रूप से हटा दिए जाते हैं।",
+    "clientCache": "क्लाइंट-साइड कैशिंग (IndexedDB)",
+    "rssCacheTTL": "RSS फ़ीड कैश: 5 मिनट TTL",
+    "newsListCacheTTL": "न्यूज़ लिस्ट कैश: 2 मिनट TTL",
+    "articleCacheTTL": "आर्टिकल कंटेंट कैश: 24 घंटे TTL",
+    "offlineSupport": "ऑफ़लाइन सपोर्ट: कैश्ड सामग्री ऑफ़लाइन होने पर भी उपलब्ध रहती है।",
+    "privacy": "गोपनीयता: आपका पढ़ने का इतिहास और कैश्ड डेटा आपके डिवाइस पर रहता है। हम व्यक्तिगत पढ़ने के व्यवहार को ट्रैक नहीं करते।",
+    "techStack": "टेक्नोलॉजी स्टैक",
+    "framework": "फ्रेमवर्क",
+    "language": "भाषा",
+    "styling": "स्टाइलिंग",
+    "uiComponents": "UI कंपोनेंट्स",
+    "database": "डेटाबेस",
+    "rssParsing": "RSS पार्सिंग",
+    "developer": "डेवलपर",
+    "openSource": "Retrui ओपन सोर्स है और GitHub पर उपलब्ध है।",
+    "builtWith": "Next.js, TypeScript और Tailwind CSS के साथ ❤️ से बनाया गया।"
+  }
 }

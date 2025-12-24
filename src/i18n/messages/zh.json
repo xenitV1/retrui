@@ -1,55 +1,87 @@
 {
-    "meta": {
-        "title": "Retrui - 个人新闻门户",
-        "description": "在一个地方聚合来自世界各地的新闻源。TechCrunch、BBC、The Verge 等。构建您自己的自定义新闻聚合器。",
-        "keywords": "新闻门户, 新闻聚合器, 个性化新闻, 科技新闻, 世界新闻, RSS阅读器"
-    },
-    "common": {
-        "loading": "加载中...",
-        "refresh": "刷新",
-        "search": "搜索",
-        "about": "关于",
-        "settings": "设置",
-        "language": "语言",
-        "darkMode": "深色模式",
-        "lightMode": "浅色模式"
-    },
-    "news": {
-        "articles": "篇文章",
-        "noNews": "暂无新闻",
-        "source": "来源",
-        "readMore": "阅读更多",
-        "openOriginal": "打开原文"
-    },
-    "categories": {
-        "all": "全部",
-        "news": "新闻",
-        "business": "商业",
-        "technology": "科技",
-        "science": "科学",
-        "sports": "体育",
-        "entertainment": "娱乐",
-        "lifestyle": "生活",
-        "opinion": "观点"
-    },
-    "sidebar": {
-        "system": "系统",
-        "category": "类别",
-        "language": "语言",
-        "selected": "已选",
-        "allLanguages": "所有语言",
-        "default": "默认",
-        "custom": "自定义",
-        "loading": "加载",
-        "myFeeds": "我的订阅",
-        "updated": "更新于",
-        "nextRefresh": "下次刷新",
-        "addFeed": "添加种子",
-        "feedSettings": "订阅设置",
-        "columnLayout": "列布局"
-    },
-    "footer": {
-        "developedBy": "开发者",
-        "copyright": "© 2025 RETRUI"
-    }
+  "meta": {
+    "title": "Retrui - 个人新闻门户",
+    "description": "在一个地方聚合来自世界各地的新闻源。TechCrunch、BBC、The Verge 等。构建您自己的自定义新闻聚合器。",
+    "keywords": "新闻门户, 新闻聚合器, 个性化新闻, 科技新闻, 世界新闻, RSS阅读器"
+  },
+  "common": {
+    "loading": "加载中...",
+    "refresh": "刷新",
+    "search": "搜索",
+    "about": "关于",
+    "settings": "设置",
+    "language": "语言",
+    "darkMode": "深色模式",
+    "lightMode": "浅色模式",
+    "backToNews": "返回新闻"
+  },
+  "news": {
+    "articles": "篇文章",
+    "noNews": "暂无新闻",
+    "source": "来源",
+    "readMore": "阅读更多",
+    "openOriginal": "打开原文"
+  },
+  "categories": {
+    "all": "全部",
+    "news": "新闻",
+    "business": "商业",
+    "technology": "科技",
+    "science": "科学",
+    "sports": "体育",
+    "entertainment": "娱乐",
+    "lifestyle": "生活",
+    "opinion": "观点"
+  },
+  "sidebar": {
+    "system": "系统",
+    "category": "类别",
+    "language": "语言",
+    "selected": "已选",
+    "allLanguages": "所有语言",
+    "default": "默认",
+    "custom": "自定义",
+    "loading": "加载",
+    "myFeeds": "我的订阅",
+    "updated": "更新于",
+    "nextRefresh": "下次刷新",
+    "addFeed": "添加种子",
+    "feedSettings": "订阅设置",
+    "columnLayout": "列布局"
+  },
+  "footer": {
+    "developedBy": "开发者",
+    "copyright": "© 2025 RETRUI"
+  },
+  "about": {
+    "title": "关于 RETRUI",
+    "intro": "Retrui 是一个现代复古风格的新闻聚合器，为您提供来自多个可信来源的最新新闻。采用美丽的怀旧界面和尖端网络技术构建。",
+    "dataCollection": "数据收集",
+    "dataCollectionDesc": "RSS订阅聚合：Retrui实时从175+个可信RSS源聚合8个类别的新闻。",
+    "dataStorage": "数据存储",
+    "serverDatabase": "服务器数据库 (Prisma Postgres)",
+    "serverDatabaseDesc": "新闻在我们的数据库中存储5天。超过5天的文章会自动删除，以保持内容新鲜和相关。",
+    "fiveDayRetention": "5天保留期",
+    "fiveDayRetentionDesc": "我们只保留5天的新闻。旧文章会自动清理，确保您始终看到最新的新闻。",
+    "realTimeUpdates": "实时更新",
+    "realTimeUpdatesDesc": "新闻源每15分钟通过自动化定时任务同步一次，确保您能访问最新头条。",
+    "autoCleanup": "自动清理",
+    "autoCleanupDesc": "超过5天的文章会自动从我们的数据库中删除，以保持最佳性能和新鲜度。",
+    "clientCache": "客户端缓存 (IndexedDB)",
+    "rssCacheTTL": "RSS订阅缓存：5分钟TTL",
+    "newsListCacheTTL": "新闻列表缓存：2分钟TTL",
+    "articleCacheTTL": "文章内容缓存：24小时TTL",
+    "offlineSupport": "离线支持：缓存内容即使离线也可用。",
+    "privacy": "隐私：您的阅读历史和缓存数据保留在您的设备上。我们不跟踪个人阅读行为。",
+    "techStack": "技术栈",
+    "framework": "框架",
+    "language": "语言",
+    "styling": "样式",
+    "uiComponents": "UI组件",
+    "database": "数据库",
+    "rssParsing": "RSS解析",
+    "developer": "开发者",
+    "openSource": "Retrui 是开源的，可在 GitHub 上获取。",
+    "builtWith": "使用 Next.js、TypeScript 和 Tailwind CSS ❤️ 构建。"
+  }
 }

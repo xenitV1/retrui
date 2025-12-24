@@ -1,55 +1,87 @@
 {
-    "meta": {
-        "title": "Retrui - Personal News Portal",
-        "description": "Aggregate news feeds from around the world in one place. TechCrunch, BBC, The Verge and more. Build your own custom news aggregator.",
-        "keywords": "news portal, news aggregator, personalized news, tech news, world news, RSS reader"
-    },
-    "common": {
-        "loading": "Loading...",
-        "refresh": "Refresh",
-        "search": "Search",
-        "about": "About",
-        "settings": "Settings",
-        "language": "Language",
-        "darkMode": "Dark Mode",
-        "lightMode": "Light Mode"
-    },
-    "news": {
-        "articles": "articles",
-        "noNews": "No news available",
-        "source": "Source",
-        "readMore": "Read More",
-        "openOriginal": "Open Original"
-    },
-    "categories": {
-        "all": "All",
-        "news": "News",
-        "business": "Business",
-        "technology": "Technology",
-        "science": "Science",
-        "sports": "Sports",
-        "entertainment": "Entertainment",
-        "lifestyle": "Lifestyle",
-        "opinion": "Opinion"
-    },
-    "sidebar": {
-        "system": "SYSTEM",
-        "category": "CATEGORY",
-        "language": "LANGUAGE",
-        "selected": "SELECTED",
-        "allLanguages": "All Languages",
-        "default": "Default",
-        "custom": "Custom",
-        "loading": "Loading",
-        "myFeeds": "MY FEEDS",
-        "updated": "UPDATED",
-        "nextRefresh": "NEXT REFRESH",
-        "addFeed": "ADD FEED",
-        "feedSettings": "FEED SETTINGS",
-        "columnLayout": "COLUMN LAYOUT"
-    },
-    "footer": {
-        "developedBy": "Developed by",
-        "copyright": "© 2025 RETRUI"
-    }
+  "meta": {
+    "title": "Retrui - Personal News Portal",
+    "description": "Aggregate news feeds from around the world in one place. TechCrunch, BBC, The Verge and more. Build your own custom news aggregator.",
+    "keywords": "news portal, news aggregator, personalized news, tech news, world news, RSS reader"
+  },
+  "common": {
+    "loading": "Loading...",
+    "refresh": "Refresh",
+    "search": "Search",
+    "about": "About",
+    "settings": "Settings",
+    "language": "Language",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode",
+    "backToNews": "Back to News"
+  },
+  "news": {
+    "articles": "articles",
+    "noNews": "No news available",
+    "source": "Source",
+    "readMore": "Read More",
+    "openOriginal": "Open Original"
+  },
+  "categories": {
+    "all": "All",
+    "news": "News",
+    "business": "Business",
+    "technology": "Technology",
+    "science": "Science",
+    "sports": "Sports",
+    "entertainment": "Entertainment",
+    "lifestyle": "Lifestyle",
+    "opinion": "Opinion"
+  },
+  "sidebar": {
+    "system": "SYSTEM",
+    "category": "CATEGORY",
+    "language": "LANGUAGE",
+    "selected": "SELECTED",
+    "allLanguages": "All Languages",
+    "default": "Default",
+    "custom": "Custom",
+    "loading": "Loading",
+    "myFeeds": "MY FEEDS",
+    "updated": "UPDATED",
+    "nextRefresh": "NEXT REFRESH",
+    "addFeed": "ADD FEED",
+    "feedSettings": "FEED SETTINGS",
+    "columnLayout": "COLUMN LAYOUT"
+  },
+  "footer": {
+    "developedBy": "Developed by",
+    "copyright": "© 2025 RETRUI"
+  },
+  "about": {
+    "title": "ABOUT RETRUI",
+    "intro": "Retrui is a modern, retro-styled news aggregator that brings you the latest news from multiple trusted sources. Built with a beautiful nostalgic interface and cutting-edge web technologies.",
+    "dataCollection": "DATA COLLECTION",
+    "dataCollectionDesc": "RSS Feed Aggregation: Retrui aggregates news from 175+ trusted RSS feeds in real-time across 8 categories.",
+    "dataStorage": "DATA STORAGE",
+    "serverDatabase": "Server Database (Prisma Postgres)",
+    "serverDatabaseDesc": "News are stored in our database for 5 days. Articles older than 5 days are automatically deleted to keep the content fresh and relevant.",
+    "fiveDayRetention": "5-Day Retention",
+    "fiveDayRetentionDesc": "We keep news for 5 days only. Older articles are automatically cleaned up to ensure you always see the most current news.",
+    "realTimeUpdates": "Real-Time Updates",
+    "realTimeUpdatesDesc": "News feeds are synchronized every 15 minutes via automated cron jobs, ensuring you have access to the latest headlines.",
+    "autoCleanup": "Automatic Cleanup",
+    "autoCleanupDesc": "Articles older than 5 days are automatically removed from our database to maintain optimal performance and freshness.",
+    "clientCache": "Client-side Caching (IndexedDB)",
+    "rssCacheTTL": "RSS Feed Cache: 5 minutes TTL",
+    "newsListCacheTTL": "News List Cache: 2 minutes TTL",
+    "articleCacheTTL": "Article Content Cache: 24 hours TTL",
+    "offlineSupport": "Offline Support: Cached content remains available even when offline.",
+    "privacy": "Privacy: Your reading history and cached data stay on your device. We do not track individual reading behavior.",
+    "techStack": "TECHNOLOGY STACK",
+    "framework": "Framework",
+    "language": "Language",
+    "styling": "Styling",
+    "uiComponents": "UI Components",
+    "database": "Database",
+    "rssParsing": "RSS Parsing",
+    "developer": "DEVELOPER",
+    "openSource": "Retrui is open source and available on GitHub.",
+    "builtWith": "Built with ❤️ using Next.js, TypeScript, and Tailwind CSS."
+  }
 }

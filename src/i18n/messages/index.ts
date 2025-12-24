@@ -10,7 +10,7 @@ import es from './es.json'
 import zh from './zh.json'
 import hi from './hi.json'
 
-const translations = {
+export const messages = {
   en,
   tr,
   de,
@@ -20,4 +20,5 @@ const translations = {
   hi
 }
 
-export default translations
+export default messages
+

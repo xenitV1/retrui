@@ -1,55 +1,87 @@
 {
-    "meta": {
-        "title": "Retrui - Kişisel Haber Portalı",
-        "description": "Dünyanın dört bir yanından haber kaynaklarını tek bir yerde toplayın. TechCrunch, BBC, The Verge ve daha fazlası. Kendi haber agregatörünüzü oluşturun.",
-        "keywords": "haber portalı, haber agregatörü, kişiselleştirilmiş haberler, teknoloji haberleri, dünya haberleri, RSS okuyucu"
-    },
-    "common": {
-        "loading": "Yükleniyor...",
-        "refresh": "Yenile",
-        "search": "Ara",
-        "about": "Hakkında",
-        "settings": "Ayarlar",
-        "language": "Dil",
-        "darkMode": "Karanlık Mod",
-        "lightMode": "Aydınlık Mod"
-    },
-    "news": {
-        "articles": "haber",
-        "noNews": "Haber bulunamadı",
-        "source": "Kaynak",
-        "readMore": "Devamını Oku",
-        "openOriginal": "Orijinali Aç"
-    },
-    "categories": {
-        "all": "Tümü",
-        "news": "Haberler",
-        "business": "İş Dünyası",
-        "technology": "Teknoloji",
-        "science": "Bilim",
-        "sports": "Spor",
-        "entertainment": "Eğlence",
-        "lifestyle": "Yaşam",
-        "opinion": "Görüş"
-    },
-    "sidebar": {
-        "system": "SİSTEM",
-        "category": "KATEGORİ",
-        "language": "DİL",
-        "selected": "SEÇİLEN",
-        "allLanguages": "Tüm Diller",
-        "default": "Varsayılan",
-        "custom": "Özel",
-        "loading": "Yükleniyor",
-        "myFeeds": "HABER KAYNAKLARIM",
-        "updated": "GÜNCELLEME",
-        "nextRefresh": "YENİ HABERLER",
-        "addFeed": "KAYNAK EKLE",
-        "feedSettings": "KAYNAK AYARLARI",
-        "columnLayout": "SÜTUN DÜZENİ"
-    },
-    "footer": {
-        "developedBy": "Geliştiren",
-        "copyright": "© 2025 RETRUI"
-    }
+  "meta": {
+    "title": "Retrui - Kişisel Haber Portalı",
+    "description": "Dünyanın dört bir yanından haber kaynaklarını tek bir yerde toplayın. TechCrunch, BBC, The Verge ve daha fazlası. Kendi haber agregatörünüzü oluşturun.",
+    "keywords": "haber portalı, haber agregatörü, kişiselleştirilmiş haberler, teknoloji haberleri, dünya haberleri, RSS okuyucu"
+  },
+  "common": {
+    "loading": "Yükleniyor...",
+    "refresh": "Yenile",
+    "search": "Ara",
+    "about": "Hakkında",
+    "settings": "Ayarlar",
+    "language": "Dil",
+    "darkMode": "Karanlık Mod",
+    "lightMode": "Aydınlık Mod",
+    "backToNews": "Haberlere Dön"
+  },
+  "news": {
+    "articles": "haber",
+    "noNews": "Haber bulunamadı",
+    "source": "Kaynak",
+    "readMore": "Devamını Oku",
+    "openOriginal": "Orijinali Aç"
+  },
+  "categories": {
+    "all": "Tümü",
+    "news": "Haberler",
+    "business": "İş Dünyası",
+    "technology": "Teknoloji",
+    "science": "Bilim",
+    "sports": "Spor",
+    "entertainment": "Eğlence",
+    "lifestyle": "Yaşam",
+    "opinion": "Görüş"
+  },
+  "sidebar": {
+    "system": "SİSTEM",
+    "category": "KATEGORİ",
+    "language": "DİL",
+    "selected": "SEÇİLEN",
+    "allLanguages": "Tüm Diller",
+    "default": "Varsayılan",
+    "custom": "Özel",
+    "loading": "Yükleniyor",
+    "myFeeds": "HABER KAYNAKLARIM",
+    "updated": "GÜNCELLEME",
+    "nextRefresh": "YENİ HABERLER",
+    "addFeed": "KAYNAK EKLE",
+    "feedSettings": "KAYNAK AYARLARI",
+    "columnLayout": "SÜTUN DÜZENİ"
+  },
+  "footer": {
+    "developedBy": "Geliştiren",
+    "copyright": "© 2025 RETRUI"
+  },
+  "about": {
+    "title": "RETRUI HAKKINDA",
+    "intro": "Retrui, birden fazla güvenilir kaynaktan en son haberleri sunan modern, retro tarzı bir haber agregatörüdür. Nostaljik bir arayüz ve son teknoloji web teknolojileri ile oluşturulmuştur.",
+    "dataCollection": "VERİ TOPLAMA",
+    "dataCollectionDesc": "RSS Akış Toplama: Retrui, 8 kategoride 175+ güvenilir RSS kaynağından haberleri gerçek zamanlı olarak toplar.",
+    "dataStorage": "VERİ DEPOLAMA",
+    "serverDatabase": "Sunucu Veritabanı (Prisma Postgres)",
+    "serverDatabaseDesc": "Haberler veritabanımızda 5 gün boyunca saklanır. 5 günden eski makaleler içeriğin taze ve güncel kalması için otomatik olarak silinir.",
+    "fiveDayRetention": "5 Günlük Saklama",
+    "fiveDayRetentionDesc": "Haberleri yalnızca 5 gün tutuyoruz. Eski makaleler, her zaman en güncel haberleri görmenizi sağlamak için otomatik olarak temizlenir.",
+    "realTimeUpdates": "Gerçek Zamanlı Güncellemeler",
+    "realTimeUpdatesDesc": "Haber akışları, otomatik cron işleri aracılığıyla her 15 dakikada bir senkronize edilir ve en son başlıklara erişiminizi sağlar.",
+    "autoCleanup": "Otomatik Temizlik",
+    "autoCleanupDesc": "5 günden eski makaleler, optimum performans ve tazelik sağlamak için veritabanımızdan otomatik olarak kaldırılır.",
+    "clientCache": "İstemci Tarafı Önbellek (IndexedDB)",
+    "rssCacheTTL": "RSS Akış Önbelleği: 5 dakika TTL",
+    "newsListCacheTTL": "Haber Listesi Önbelleği: 2 dakika TTL",
+    "articleCacheTTL": "Makale İçeriği Önbelleği: 24 saat TTL",
+    "offlineSupport": "Çevrimdışı Destek: Önbelleğe alınan içerik çevrimdışıyken bile kullanılabilir.",
+    "privacy": "Gizlilik: Okuma geçmişiniz ve önbelleğe alınan veriler cihazınızda kalır. Bireysel okuma davranışını takip etmiyoruz.",
+    "techStack": "TEKNOLOJİ YIĞINI",
+    "framework": "Framework",
+    "language": "Dil",
+    "styling": "Stil",
+    "uiComponents": "UI Bileşenleri",
+    "database": "Veritabanı",
+    "rssParsing": "RSS Ayrıştırma",
+    "developer": "GELİŞTİRİCİ",
+    "openSource": "Retrui açık kaynaklıdır ve GitHub'da mevcuttur.",
+    "builtWith": "Next.js, TypeScript ve Tailwind CSS ile ❤️ yapılmıştır."
+  }
 }

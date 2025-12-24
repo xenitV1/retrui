@@ -1,55 +1,87 @@
 {
-    "meta": {
-        "title": "Retrui - Persönlicher Nachrichten-Portal",
-        "description": "Aggregieren Sie Nachrichtenfeeds aus der ganzen Welt an einem Ort. TechCrunch, BBC, The Verge und mehr. Erstellen Sie Ihren eigenen Nachrichten-Aggregator.",
-        "keywords": "nachrichten portal, nachrichten aggregator, personalisierte nachrichten, tech news, welt news, RSS reader"
-    },
-    "common": {
-        "loading": "Laden...",
-        "refresh": "Aktualisieren",
-        "search": "Suchen",
-        "about": "Über",
-        "settings": "Einstellungen",
-        "language": "Sprache",
-        "darkMode": "Dunkelmodus",
-        "lightMode": "Hellmodus"
-    },
-    "news": {
-        "articles": "Artikel",
-        "noNews": "Keine Nachrichten verfügbar",
-        "source": "Quelle",
-        "readMore": "Weiterlesen",
-        "openOriginal": "Original öffnen"
-    },
-    "categories": {
-        "all": "Alle",
-        "news": "Nachrichten",
-        "business": "Wirtschaft",
-        "technology": "Technologie",
-        "science": "Wissenschaft",
-        "sports": "Sport",
-        "entertainment": "Unterhaltung",
-        "lifestyle": "Lifestyle",
-        "opinion": "Meinung"
-    },
-    "sidebar": {
-        "system": "SYSTEM",
-        "category": "KATEGORIE",
-        "language": "SPRACHE",
-        "selected": "AUSGEWÄHLT",
-        "allLanguages": "Alle Sprachen",
-        "default": "Standard",
-        "custom": "Benutzerdefiniert",
-        "loading": "Laden",
-        "myFeeds": "MEINE FEEDS",
-        "updated": "AKTUALISIERT",
-        "nextRefresh": "NÄCHSTE AKTUALISIERUNG",
-        "addFeed": "FEED HINZUFÜGEN",
-        "feedSettings": "FEED-EINSTELLUNGEN",
-        "columnLayout": "SPALTEN-LAYOUT"
-    },
-    "footer": {
-        "developedBy": "Entwickelt von",
-        "copyright": "© 2025 RETRUI"
-    }
+  "meta": {
+    "title": "Retrui - Persönlicher Nachrichten-Portal",
+    "description": "Aggregieren Sie Nachrichtenfeeds aus der ganzen Welt an einem Ort. TechCrunch, BBC, The Verge und mehr. Erstellen Sie Ihren eigenen Nachrichten-Aggregator.",
+    "keywords": "nachrichten portal, nachrichten aggregator, personalisierte nachrichten, tech news, welt news, RSS reader"
+  },
+  "common": {
+    "loading": "Laden...",
+    "refresh": "Aktualisieren",
+    "search": "Suchen",
+    "about": "Über",
+    "settings": "Einstellungen",
+    "language": "Sprache",
+    "darkMode": "Dunkelmodus",
+    "lightMode": "Hellmodus",
+    "backToNews": "Zurück zu Nachrichten"
+  },
+  "news": {
+    "articles": "Artikel",
+    "noNews": "Keine Nachrichten verfügbar",
+    "source": "Quelle",
+    "readMore": "Weiterlesen",
+    "openOriginal": "Original öffnen"
+  },
+  "categories": {
+    "all": "Alle",
+    "news": "Nachrichten",
+    "business": "Wirtschaft",
+    "technology": "Technologie",
+    "science": "Wissenschaft",
+    "sports": "Sport",
+    "entertainment": "Unterhaltung",
+    "lifestyle": "Lifestyle",
+    "opinion": "Meinung"
+  },
+  "sidebar": {
+    "system": "SYSTEM",
+    "category": "KATEGORIE",
+    "language": "SPRACHE",
+    "selected": "AUSGEWÄHLT",
+    "allLanguages": "Alle Sprachen",
+    "default": "Standard",
+    "custom": "Benutzerdefiniert",
+    "loading": "Laden",
+    "myFeeds": "MEINE FEEDS",
+    "updated": "AKTUALISIERT",
+    "nextRefresh": "NÄCHSTE AKTUALISIERUNG",
+    "addFeed": "FEED HINZUFÜGEN",
+    "feedSettings": "FEED-EINSTELLUNGEN",
+    "columnLayout": "SPALTEN-LAYOUT"
+  },
+  "footer": {
+    "developedBy": "Entwickelt von",
+    "copyright": "© 2025 RETRUI"
+  },
+  "about": {
+    "title": "ÜBER RETRUI",
+    "intro": "Retrui ist ein moderner, retro-gestalteter Nachrichten-Aggregator, der Ihnen die neuesten Nachrichten aus mehreren vertrauenswürdigen Quellen liefert. Mit einer wunderschönen nostalgischen Benutzeroberfläche und modernsten Webtechnologien erstellt.",
+    "dataCollection": "DATENERFASSUNG",
+    "dataCollectionDesc": "RSS-Feed-Aggregation: Retrui aggregiert Nachrichten aus 175+ vertrauenswürdigen RSS-Feeds in Echtzeit in 8 Kategorien.",
+    "dataStorage": "DATENSPEICHERUNG",
+    "serverDatabase": "Server-Datenbank (Prisma Postgres)",
+    "serverDatabaseDesc": "Nachrichten werden 5 Tage in unserer Datenbank gespeichert. Artikel älter als 5 Tage werden automatisch gelöscht, um den Inhalt frisch und relevant zu halten.",
+    "fiveDayRetention": "5-Tage-Aufbewahrung",
+    "fiveDayRetentionDesc": "Wir behalten Nachrichten nur 5 Tage. Ältere Artikel werden automatisch bereinigt, damit Sie immer die aktuellsten Nachrichten sehen.",
+    "realTimeUpdates": "Echtzeit-Updates",
+    "realTimeUpdatesDesc": "Nachrichten-Feeds werden alle 15 Minuten über automatisierte Cron-Jobs synchronisiert, um Ihnen Zugang zu den neuesten Schlagzeilen zu gewährleisten.",
+    "autoCleanup": "Automatische Bereinigung",
+    "autoCleanupDesc": "Artikel älter als 5 Tage werden automatisch aus unserer Datenbank entfernt, um optimale Leistung und Frische zu gewährleisten.",
+    "clientCache": "Client-seitiges Caching (IndexedDB)",
+    "rssCacheTTL": "RSS-Feed-Cache: 5 Minuten TTL",
+    "newsListCacheTTL": "Nachrichtenlisten-Cache: 2 Minuten TTL",
+    "articleCacheTTL": "Artikelinhalt-Cache: 24 Stunden TTL",
+    "offlineSupport": "Offline-Unterstützung: Gecachte Inhalte bleiben auch offline verfügbar.",
+    "privacy": "Datenschutz: Ihre Lesehistorie und gecachten Daten bleiben auf Ihrem Gerät. Wir verfolgen kein individuelles Leseverhalten.",
+    "techStack": "TECHNOLOGIE-STACK",
+    "framework": "Framework",
+    "language": "Sprache",
+    "styling": "Styling",
+    "uiComponents": "UI-Komponenten",
+    "database": "Datenbank",
+    "rssParsing": "RSS-Parsing",
+    "developer": "ENTWICKLER",
+    "openSource": "Retrui ist Open Source und auf GitHub verfügbar.",
+    "builtWith": "Mit ❤️ erstellt mit Next.js, TypeScript und Tailwind CSS."
+  }
 }
